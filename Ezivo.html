@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>質性資料標籤系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .text-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        #textContent {
+            min-height: 400px;
+            padding: 20px;
+            line-height: 2;
+            font-size: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+        
+        .highlighted {
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            margin: 0 2px;
+        }
+        
+        .highlighted:hover::after {
+            content: attr(data-labels);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        
+        .highlight-inquiry { background-color: rgba(52, 152, 219, 0.3); }
+        .highlight-systems { background-color: rgba(46, 204, 113, 0.3); }
+        .highlight-ai { background-color: rgba(231, 76, 60, 0.3); }
+        .highlight-mixed { background-color: rgba(155, 89, 182, 0.3); }
+        
+        .label-category {
+            margin-bottom: 20px;
+        }
+        
+        .label-category h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .label-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .label-tag {
+            padding: 6px 12px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .label-tag:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .label-tag.active {
+            color: white;
+        }
+        
+        .label-tag.inquiry { border-color: #3498db; }
+        .label-tag.inquiry.active { background-color: #3498db; }
+        
+        .label-tag.systems { border-color: #2ecc71; }
+        .label-tag.systems.active { background-color: #2ecc71; }
+        
+        .label-tag.ai { border-color: #e74c3c; }
+        .label-tag.ai.active { background-color: #e74c3c; }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .stats-panel {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .stats-table th,
+        .stats-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .stats-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stats-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        #textInput {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        
+        .selection-info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .labeled-items-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .labeled-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .labeled-item-text {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .labeled-item-labels {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .label-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .label-badge.inquiry { background-color: #3498db; }
+        .label-badge.systems { background-color: #2ecc71; }
+        .label-badge.ai { background-color: #e74c3c; }
+        
+        .score-selector {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .score-selector.active {
+            display: block;
+        }
+        
+        .score-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .score-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-btn:hover {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .score-btn.selected {
+            background-color: #2c3e50;
+            color: white;
+            border-color: #2c3e50;
+        }
+        
+        .skip-score-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        
+        .skip-score-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .label-with-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .score-badge {
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .temp-highlight {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 2px 4px;
+            border-radius: 3px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+            }
+            70% {
+                opacity: 0.9;
+                box-shadow: 0 0 0 5px rgba(255, 193, 7, 0);
+            }
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+            }
+        }
+        
+        .scoring-text-preview {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-style: italic;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>質性資料標籤系統</h1>
+            <p>選取文字並點擊標籤進行標記</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="text-panel">
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="showImportModal()">匯入文本</button>
+                    <button class="btn btn-secondary" onclick="clearAll()">清除所有</button>
+                </div>
+                
+                <div id="textContent">
+                    請點擊「匯入文本」按鈕開始
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="selection-info">
+                    <strong>選取文字：</strong>
+                    <div id="selectedText" style="margin-top: 5px; color: #666;">
+                        尚未選取任何文字
+                    </div>
+                </div>
+                
+                <div class="label-category">
+                    <h3>探究階段</h3>
+                    <div class="label-tags">
+                        <span class="label-tag inquiry" onclick="applyLabel('探究階段', '定向階段')">定向階段</span>
+                        <span class="label-tag inquiry" onclick="applyLabel('探究階段', '概念化階段')">概念化階段</span>
+                        <span class="label-tag inquiry" onclick="applyLabel('探究階段', '調查階段')">調查階段</span>
+                        <span class="label-tag inquiry" onclick="applyLabel('探究階段', '結論階段')">結論階段</span>
+                    </div>
+                </div>
+                
+                <div class="label-category">
+                    <h3>系統思考</h3>
+                    <div class="label-tags">
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '元素')">元素</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '倆倆關聯')">倆倆關聯</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '交互作用')">交互作用</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '回饋作用')">回饋作用</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '不確定性')">不確定性</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '平衡')">平衡</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '非線性思維')">非線性思維</span>
+                        <span class="label-tag systems" onclick="applyLabel('系統思考', '非中心思維')">非中心思維</span>
+                    </div>
+                </div>
+                
+                <div class="label-category">
+                    <h3>AI使用</h3>
+                    <div class="label-tags">
+                        <span class="label-tag ai" onclick="applyLabel('AI使用', '傳統探究AI')">傳統探究AI</span>
+                        <span class="label-tag ai" onclick="applyLabel('AI使用', '系統思考AI')">系統思考AI</span>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-danger" onclick="removeLabel()">移除標籤</button>
+                    <button class="btn btn-primary" onclick="showStats()">顯示統計</button>
+                    <button class="btn btn-secondary" onclick="exportPDF()">匯出PDF</button>
+                </div>
+                
+                <div id="scoreSelector" class="score-selector">
+                    <h4>評分（選填）</h4>
+                    <div id="scoringTextPreview" class="scoring-text-preview"></div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="score-buttons">
+                            <button class="score-btn" onclick="setScore(0)">0</button>
+                            <button class="score-btn" onclick="setScore(1)">1</button>
+                            <button class="score-btn" onclick="setScore(2)">2</button>
+                            <button class="score-btn" onclick="setScore(3)">3</button>
+                            <button class="score-btn" onclick="setScore(4)">4</button>
+                            <button class="score-btn" onclick="setScore(5)">5</button>
+                        </div>
+                        <button class="skip-score-btn" onclick="skipScore()">略過評分</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="statsPanel" class="stats-panel" style="display: none;">
+            <h2>標籤統計結果</h2>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>標籤類別</th>
+                        <th>標籤名稱</th>
+                        <th>標記次數</th>
+                        <th>平均分數</th>
+                    </tr>
+                </thead>
+                <tbody id="statsTableBody">
+                </tbody>
+            </table>
+            
+            <div class="labeled-items-list">
+                <h3 style="margin-top: 30px;">已標記內容</h3>
+                <div id="labeledItemsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 匯入文本的 Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>匯入文本</h2>
+            <p style="margin: 10px 0;">請輸入或貼上要分析的文本內容：</p>
+            <textarea id="textInput" placeholder="貼上您的文本內容..."></textarea>
+            <div class="button-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="importText()">匯入</button>
+                <button class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 檔案名稱輸入的 Modal -->
+    <div id="filenameModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeFilenameModal()">&times;</span>
+            <h2>輸出PDF檔案</h2>
+            <p style="margin: 10px 0;">請輸入檔案名稱：</p>
+            <input type="text" id="filenameInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: 'Microsoft JhengHei', Arial, sans-serif;" placeholder="例：我的質性資料分析">
+            <p style="margin: 10px 0; font-size: 12px; color: #666;">檔案將會儲存為：<span id="filenamePreview">檔案名稱.pdf</span></p>
+            <div class="button-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="confirmExportPDF()">確定輸出</button>
+                <button class="btn btn-secondary" onclick="closeFilenameModal()">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全域變數
+        let originalText = '';
+        let labeledSegments = [];
+        let currentSelection = null;
+        let segmentIdCounter = 0;
+        let pendingLabel = null; // 儲存待評分的標籤
+        
+        // 顯示匯入Modal
+        function showImportModal() {
+            document.getElementById('importModal').style.display = 'block';
+        }
+        
+        // 關閉匯入Modal
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+            document.getElementById('textInput').value = '';
+        }
+        
+        // 匯入文本
+        function importText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                alert('請輸入文本內容');
+                return;
+            }
+            
+            originalText = text;
+            document.getElementById('textContent').textContent = text;
+            labeledSegments = [];
+            segmentIdCounter = 0;
+            
+            // 設置文字選取監聽
+            setupTextSelection();
+            
+            closeImportModal();
+        }
+        
+        // 設置文字選取監聽
+        function setupTextSelection() {
+            const textContent = document.getElementById('textContent');
+            
+            textContent.addEventListener('mouseup', function() {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText) {
+                    const range = selection.getRangeAt(0);
+                    const startOffset = getTextOffset(textContent, range.startContainer, range.startOffset);
+                    const endOffset = getTextOffset(textContent, range.endContainer, range.endOffset);
+                    
+                    currentSelection = {
+                        text: selectedText,
+                        start: startOffset,
+                        end: endOffset
+                    };
+                    
+                    document.getElementById('selectedText').textContent = 
+                        selectedText.length > 50 ? selectedText.substring(0, 50) + '...' : selectedText;
+                } else {
+                    currentSelection = null;
+                    document.getElementById('selectedText').textContent = '尚未選取任何文字';
+                }
+            });
+        }
+        
+        // 計算文字偏移量
+        function getTextOffset(root, node, offset) {
+            let textOffset = 0;
+            let walker = document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let currentNode;
+            while (currentNode = walker.nextNode()) {
+                if (currentNode === node) {
+                    return textOffset + offset;
+                }
+                textOffset += currentNode.textContent.length;
+            }
+            return textOffset;
+        }
+        
+        // 應用標籤
+        function applyLabel(category, label) {
+            if (!currentSelection) {
+                alert('請先選取要標記的文字');
+                return;
+            }
+            
+            // 儲存待評分的標籤資訊
+            pendingLabel = {
+                category: category,
+                label: label,
+                selection: currentSelection
+            };
+            
+            // 顯示評分選擇器
+            document.getElementById('scoreSelector').classList.add('active');
+            
+            // 顯示正在評分的文字預覽
+            const previewText = currentSelection.text.length > 100 ? 
+                currentSelection.text.substring(0, 100) + '...' : 
+                currentSelection.text;
+            document.getElementById('scoringTextPreview').innerHTML = 
+                `<strong>正在標記「${label}」：</strong><br>${escapeHtml(previewText)}`;
+            
+            // 在原文中添加臨時高亮
+            addTempHighlight(currentSelection.start, currentSelection.end);
+            
+            // 清除之前的選擇
+            document.querySelectorAll('.score-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+        }
+        
+        // 添加臨時高亮
+        function addTempHighlight(start, end) {
+            const textContent = document.getElementById('textContent');
+            const text = originalText;
+            
+            // 建立包含臨時高亮的HTML
+            let html = '';
+            let lastPos = 0;
+            
+            // 處理已有的標記
+            const sortedSegments = [...labeledSegments].sort((a, b) => a.start - b.start);
+            const charLabels = new Array(text.length);
+            for (let i = 0; i < charLabels.length; i++) {
+                charLabels[i] = new Set();
+            }
+            
+            sortedSegments.forEach(segment => {
+                const allLabels = [];
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        if (typeof labelItem === 'string') {
+                            allLabels.push({ category, label: labelItem });
+                        } else {
+                            allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                        }
+                    });
+                });
+                
+                for (let i = segment.start; i < segment.end; i++) {
+                    allLabels.forEach(labelInfo => {
+                        charLabels[i].add(JSON.stringify(labelInfo));
+                    });
+                }
+            });
+            
+            // 渲染文本
+            let i = 0;
+            while (i < text.length) {
+                // 檢查是否在臨時高亮範圍內
+                const isInTempRange = i >= start && i < end;
+                
+                if (charLabels[i].size === 0 && !isInTempRange) {
+                    // 未標記且不在臨時範圍的文字
+                    let j = i;
+                    while (j < text.length && charLabels[j].size === 0 && (j < start || j >= end)) {
+                        j++;
+                    }
+                    html += escapeHtml(text.substring(i, j));
+                    i = j;
+                } else if (isInTempRange) {
+                    // 臨時高亮範圍
+                    let j = i;
+                    while (j < end && j < text.length) {
+                        j++;
+                    }
+                    html += `<span class="temp-highlight">${escapeHtml(text.substring(i, j))}</span>`;
+                    i = j;
+                } else {
+                    // 已標記的文字
+                    let j = i;
+                    const currentLabelsStr = Array.from(charLabels[i]).sort().join('|');
+                    
+                    while (j < text.length && 
+                           Array.from(charLabels[j]).sort().join('|') === currentLabelsStr &&
+                           (j < start || j >= end)) {
+                        j++;
+                    }
+                    
+                    const labelsSet = charLabels[i];
+                    const parsedLabels = Array.from(labelsSet).map(str => JSON.parse(str));
+                    const categories = new Set(parsedLabels.map(l => l.category));
+                    
+                    let className = 'highlighted ';
+                    if (categories.size > 1) {
+                        className += 'highlight-mixed';
+                    } else if (categories.has('探究階段')) {
+                        className += 'highlight-inquiry';
+                    } else if (categories.has('系統思考')) {
+                        className += 'highlight-systems';
+                    } else if (categories.has('AI使用')) {
+                        className += 'highlight-ai';
+                    }
+                    
+                    const labelsList = parsedLabels.map(l => 
+                        l.score !== undefined ? `${l.label}(${l.score}分)` : l.label
+                    ).join(', ');
+                    
+                    html += `<span class="${className}" data-labels="${labelsList}">${escapeHtml(text.substring(i, j))}</span>`;
+                    i = j;
+                }
+            }
+            
+            textContent.innerHTML = html;
+        }
+        
+        // 移除臨時高亮
+        function removeTempHighlight() {
+            renderHighlightedText();
+        }
+        
+        // 設定分數
+        function setScore(score) {
+            if (!pendingLabel) return;
+            
+            // 標記選中的分數按鈕
+            document.querySelectorAll('.score-btn').forEach((btn, index) => {
+                if (index === score) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            
+            // 延遲一下讓使用者看到選擇
+            setTimeout(() => {
+                addLabelWithScore(score);
+            }, 200);
+        }
+        
+        // 略過評分
+        function skipScore() {
+            if (!pendingLabel) return;
+            addLabelWithScore(null);
+        }
+        
+        // 添加帶分數的標籤
+        function addLabelWithScore(score) {
+            if (!pendingLabel) return;
+            
+            const { category, label, selection } = pendingLabel;
+            
+            // 檢查是否已存在相同的片段
+            let existingSegment = labeledSegments.find(seg => 
+                seg.start === selection.start && 
+                seg.end === selection.end
+            );
+            
+            if (existingSegment) {
+                // 如果標籤已存在，則不重複添加
+                if (!existingSegment.labels[category]) {
+                    existingSegment.labels[category] = [];
+                }
+                
+                // 檢查是否已有相同標籤
+                const existingLabelIndex = existingSegment.labels[category].findIndex(
+                    item => typeof item === 'string' ? item === label : item.label === label
+                );
+                
+                if (existingLabelIndex === -1) {
+                    // 添加新標籤
+                    if (score !== null) {
+                        existingSegment.labels[category].push({ label: label, score: score });
+                    } else {
+                        existingSegment.labels[category].push(label);
+                    }
+                } else {
+                    // 更新現有標籤的分數
+                    if (score !== null) {
+                        existingSegment.labels[category][existingLabelIndex] = { label: label, score: score };
+                    }
+                }
+            } else {
+                // 創建新的標記片段
+                const newLabels = {};
+                newLabels[category] = score !== null ? [{ label: label, score: score }] : [label];
+                
+                labeledSegments.push({
+                    id: segmentIdCounter++,
+                    text: selection.text,
+                    start: selection.start,
+                    end: selection.end,
+                    labels: newLabels
+                });
+            }
+            
+            renderHighlightedText();
+            window.getSelection().removeAllRanges();
+            currentSelection = null;
+            pendingLabel = null;
+            document.getElementById('selectedText').textContent = '尚未選取任何文字';
+            document.getElementById('scoreSelector').classList.remove('active');
+            removeTempHighlight();
+        }
+        
+        // 移除標籤
+        function removeLabel() {
+            if (!currentSelection) {
+                alert('請先選取要移除標籤的文字');
+                return;
+            }
+            
+            // 找出所有與選取範圍重疊的片段
+            labeledSegments = labeledSegments.filter(seg => {
+                // 檢查是否有重疊
+                const hasOverlap = !(seg.end <= currentSelection.start || seg.start >= currentSelection.end);
+                
+                if (hasOverlap) {
+                    // 如果選取範圍完全包含這個片段，則移除
+                    if (currentSelection.start <= seg.start && currentSelection.end >= seg.end) {
+                        return false; // 移除這個片段
+                    }
+                    
+                    // 如果選取範圍與片段部分重疊，保留片段但可能需要調整
+                    // 這裡我們選擇完全移除，您可以根據需求調整邏輯
+                    return false;
+                }
+                
+                return true; // 保留不重疊的片段
+            });
+            
+            renderHighlightedText();
+            window.getSelection().removeAllRanges();
+            currentSelection = null;
+            document.getElementById('selectedText').textContent = '尚未選取任何文字';
+        }
+        
+        // 渲染帶標記的文本
+        function renderHighlightedText() {
+            const textContent = document.getElementById('textContent');
+            
+            // 不合併片段，而是處理重疊顯示
+            const sortedSegments = [...labeledSegments].sort((a, b) => {
+                // 先按開始位置排序，如果相同則按長度降序排序
+                if (a.start === b.start) {
+                    return (b.end - b.start) - (a.end - a.start);
+                }
+                return a.start - b.start;
+            });
+            
+            // 建立字元級別的標記映射
+            const charLabels = new Array(originalText.length);
+            for (let i = 0; i < charLabels.length; i++) {
+                charLabels[i] = new Set();
+            }
+            
+            // 為每個字元收集所有標籤
+            sortedSegments.forEach(segment => {
+                const allLabels = [];
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        if (typeof labelItem === 'string') {
+                            allLabels.push({ category, label: labelItem });
+                        } else {
+                            allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                        }
+                    });
+                });
+                
+                for (let i = segment.start; i < segment.end; i++) {
+                    allLabels.forEach(labelInfo => {
+                        charLabels[i].add(JSON.stringify(labelInfo));
+                    });
+                }
+            });
+            
+            // 建立連續相同標籤的片段
+            let html = '';
+            let i = 0;
+            
+            while (i < originalText.length) {
+                if (charLabels[i].size === 0) {
+                    // 未標記的文字
+                    let j = i;
+                    while (j < originalText.length && charLabels[j].size === 0) {
+                        j++;
+                    }
+                    html += escapeHtml(originalText.substring(i, j));
+                    i = j;
+                } else {
+                    // 標記的文字 - 找到相同標籤集合的連續範圍
+                    let j = i;
+                    const currentLabelsStr = Array.from(charLabels[i]).sort().join('|');
+                    
+                    while (j < originalText.length && 
+                           Array.from(charLabels[j]).sort().join('|') === currentLabelsStr) {
+                        j++;
+                    }
+                    
+                    // 解析標籤並決定顏色
+                    const labelsSet = charLabels[i];
+                    const parsedLabels = Array.from(labelsSet).map(str => JSON.parse(str));
+                    const categories = new Set(parsedLabels.map(l => l.category));
+                    
+                    let className = 'highlighted ';
+                    if (categories.size > 1) {
+                        className += 'highlight-mixed';
+                    } else if (categories.has('探究階段')) {
+                        className += 'highlight-inquiry';
+                    } else if (categories.has('系統思考')) {
+                        className += 'highlight-systems';
+                    } else if (categories.has('AI使用')) {
+                        className += 'highlight-ai';
+                    }
+                    
+                    // 準備標籤提示
+                    const labelsList = parsedLabels.map(l => 
+                        l.score !== undefined ? `${l.label}(${l.score}分)` : l.label
+                    ).join(', ');
+                    
+                    html += `<span class="${className}" data-labels="${labelsList}">${escapeHtml(originalText.substring(i, j))}</span>`;
+                    i = j;
+                }
+            }
+            
+            textContent.innerHTML = html;
+            setupTextSelection();
+        }
+        
+        // HTML轉義
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 清除所有
+        function clearAll() {
+            if (confirm('確定要清除所有資料嗎？')) {
+                originalText = '';
+                labeledSegments = [];
+                currentSelection = null;
+                segmentIdCounter = 0;
+                document.getElementById('textContent').textContent = '請點擊「匯入文本」按鈕開始';
+                document.getElementById('selectedText').textContent = '尚未選取任何文字';
+                document.getElementById('statsPanel').style.display = 'none';
+            }
+        }
+        
+        // 顯示統計
+        function showStats() {
+            if (!originalText) {
+                alert('請先匯入文本');
+                return;
+            }
+            
+            const statsPanel = document.getElementById('statsPanel');
+            statsPanel.style.display = 'block';
+            
+            // 計算統計數據
+            const stats = calculateStats();
+            
+            // 更新統計表格
+            const tbody = document.getElementById('statsTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(stats).forEach(([category, labels]) => {
+                Object.entries(labels).forEach(([label, data]) => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = category;
+                    row.insertCell(1).textContent = label;
+                    row.insertCell(2).textContent = data.count;
+                    
+                    // 計算平均分數
+                    const avgCell = row.insertCell(3);
+                    if (data.scores.length > 0) {
+                        const avg = (data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1);
+                        avgCell.textContent = avg;
+                    } else {
+                        avgCell.textContent = '-';
+                    }
+                });
+            });
+            
+            // 顯示已標記內容
+            displayLabeledItems();
+            
+            // 捲動到統計區域
+            statsPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 計算統計數據
+        function calculateStats() {
+            const stats = {
+                '探究階段': {},
+                '系統思考': {},
+                'AI使用': {}
+            };
+            
+            labeledSegments.forEach(segment => {
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        const labelName = typeof labelItem === 'string' ? labelItem : labelItem.label;
+                        if (!stats[category][labelName]) {
+                            stats[category][labelName] = { count: 0, scores: [] };
+                        }
+                        stats[category][labelName].count++;
+                        
+                        if (typeof labelItem === 'object' && labelItem.score !== undefined) {
+                            stats[category][labelName].scores.push(labelItem.score);
+                        }
+                    });
+                });
+            });
+            
+            return stats;
+        }
+        
+        // 顯示已標記內容
+        function displayLabeledItems() {
+            const container = document.getElementById('labeledItemsList');
+            container.innerHTML = '';
+            
+            labeledSegments.forEach(segment => {
+                const item = document.createElement('div');
+                item.className = 'labeled-item';
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'labeled-item-text';
+                textDiv.textContent = segment.text.length > 100 ? 
+                    segment.text.substring(0, 100) + '...' : segment.text;
+                
+                const labelsDiv = document.createElement('div');
+                labelsDiv.className = 'labeled-item-labels';
+                
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        const badge = document.createElement('span');
+                        badge.className = 'label-badge';
+                        if (category === '探究階段') badge.classList.add('inquiry');
+                        else if (category === '系統思考') badge.classList.add('systems');
+                        else if (category === 'AI使用') badge.classList.add('ai');
+                        
+                        if (typeof labelItem === 'string') {
+                            badge.textContent = labelItem;
+                        } else {
+                            // 包含分數的標籤
+                            const labelWithScore = document.createElement('span');
+                            labelWithScore.className = 'label-with-score';
+                            labelWithScore.innerHTML = `${labelItem.label} <span class="score-badge">${labelItem.score}</span>`;
+                            badge.appendChild(labelWithScore);
+                        }
+                        
+                        labelsDiv.appendChild(badge);
+                    });
+                });
+                
+                item.appendChild(textDiv);
+                item.appendChild(labelsDiv);
+                container.appendChild(item);
+            });
+        }
+        
+        // 為PDF生成高亮文本
+        function generateHighlightedTextForPDF() {
+            if (!originalText) return '';
+            
+            // 建立字元級別的標記映射
+            const charLabels = new Array(originalText.length);
+            for (let i = 0; i < charLabels.length; i++) {
+                charLabels[i] = new Set();
+            }
+            
+            // 為每個字元收集所有標籤
+            labeledSegments.forEach(segment => {
+                const allLabels = [];
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        if (typeof labelItem === 'string') {
+                            allLabels.push({ category, label: labelItem });
+                        } else {
+                            allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                        }
+                    });
+                });
+                
+                for (let i = segment.start; i < segment.end; i++) {
+                    allLabels.forEach(labelInfo => {
+                        charLabels[i].add(JSON.stringify(labelInfo));
+                    });
+                }
+            });
+            
+            // 建立連續相同標籤的片段
+            let html = '';
+            let i = 0;
+            
+            while (i < originalText.length) {
+                const char = originalText[i];
+                
+                // 處理換行符號
+                if (char === '\n') {
+                    html += '<br>';
+                    i++;
+                    continue;
+                }
+                
+                if (charLabels[i].size === 0) {
+                    // 未標記的文字
+                    let j = i;
+                    while (j < originalText.length && charLabels[j].size === 0 && originalText[j] !== '\n') {
+                        j++;
+                    }
+                    html += escapeHtml(originalText.substring(i, j));
+                    i = j;
+                } else {
+                    // 標記的文字 - 找到相同標籤集合的連續範圍
+                    let j = i;
+                    const currentLabelsStr = Array.from(charLabels[i]).sort().join('|');
+                    
+                    while (j < originalText.length && 
+                           originalText[j] !== '\n' &&
+                           Array.from(charLabels[j]).sort().join('|') === currentLabelsStr) {
+                        j++;
+                    }
+                    
+                    // 解析標籤並決定顏色
+                    const labelsSet = charLabels[i];
+                    const parsedLabels = Array.from(labelsSet).map(str => JSON.parse(str));
+                    const categories = new Set(parsedLabels.map(l => l.category));
+                    
+                    let backgroundColor = '';
+                    if (categories.size > 1) {
+                        backgroundColor = 'rgba(155, 89, 182, 0.3)'; // 混合標籤
+                    } else if (categories.has('探究階段')) {
+                        backgroundColor = 'rgba(52, 152, 219, 0.3)'; // 藍色
+                    } else if (categories.has('系統思考')) {
+                        backgroundColor = 'rgba(46, 204, 113, 0.3)'; // 綠色
+                    } else if (categories.has('AI使用')) {
+                        backgroundColor = 'rgba(231, 76, 60, 0.3)'; // 紅色
+                    }
+                    
+                    // 準備標籤提示
+                    const labelsList = parsedLabels.map(l => 
+                        l.score !== undefined ? `${l.label}(${l.score}分)` : l.label
+                    ).join(', ');
+                    
+                    html += `<span style="background-color: ${backgroundColor}; padding: 2px 4px; border-radius: 3px; margin: 0 1px;" title="${labelsList}">${escapeHtml(originalText.substring(i, j))}</span>`;
+                    i = j;
+                }
+            }
+            
+            return html;
+        }
+        
+        // 顯示檔案名稱輸入Modal
+        function exportPDF() {
+            if (!originalText) {
+                alert('請先匯入文本');
+                return;
+            }
+            
+            // 設置預設檔案名稱
+            const defaultFilename = `質性資料標籤分析報告_${new Date().toISOString().split('T')[0]}`;
+            document.getElementById('filenameInput').value = defaultFilename;
+            updateFilenamePreview();
+            
+            // 顯示modal
+            document.getElementById('filenameModal').style.display = 'block';
+        }
+        
+        // 關閉檔案名稱輸入Modal
+        function closeFilenameModal() {
+            document.getElementById('filenameModal').style.display = 'none';
+            document.getElementById('filenameInput').value = '';
+        }
+        
+        // 更新檔案名稱預覽
+        function updateFilenamePreview() {
+            const filename = document.getElementById('filenameInput').value.trim();
+            const preview = filename || '檔案名稱';
+            document.getElementById('filenamePreview').textContent = preview + '.pdf';
+        }
+        
+        // 確認輸出PDF
+        function confirmExportPDF() {
+            const filename = document.getElementById('filenameInput').value.trim();
+            if (!filename) {
+                alert('請輸入檔案名稱');
+                return;
+            }
+            
+            closeFilenameModal();
+            generatePDF(filename);
+        }
+        
+        // 實際生成PDF的函數
+        function generatePDF(filename) {
+            
+            // 使用html2canvas和jsPDF來生成PDF，這樣可以保持中文字體
+            const element = document.createElement('div');
+            element.style.padding = '20px';
+            element.style.fontFamily = 'Microsoft JhengHei, Arial, sans-serif';
+            element.style.fontSize = '14px';
+            element.style.lineHeight = '1.6';
+            element.style.color = '#333';
+            element.style.backgroundColor = 'white';
+            element.style.width = '210mm'; // A4寬度
+            
+            // 建構PDF內容
+            const stats = calculateStats();
+            
+            let htmlContent = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="font-size: 24px; margin-bottom: 10px;">質性資料標籤分析報告</h1>
+                    <p style="font-size: 12px; color: #666;">產生日期: ${new Date().toLocaleDateString('zh-TW')}</p>
+                </div>
+                
+                <div style="margin-bottom: 40px;">
+                    <h2 style="font-size: 18px; margin-bottom: 15px; color: #2c3e50;">標籤統計</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">標籤類別</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">標籤名稱</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">標記次數</th>
+                                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">平均分數</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            Object.entries(stats).forEach(([category, labels]) => {
+                Object.entries(labels).forEach(([label, data]) => {
+                    const avgScore = data.scores.length > 0 
+                        ? (data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1)
+                        : '-';
+                    
+                    htmlContent += `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${category}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${label}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${data.count}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${avgScore}</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            htmlContent += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-bottom: 40px;">
+                    <h2 style="font-size: 18px; margin-bottom: 15px; color: #2c3e50;">標記文本</h2>
+                    <div style="margin-bottom: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 12px;">
+                        <strong>標記圖例：</strong>
+                        <span style="background-color: rgba(52, 152, 219, 0.3); padding: 2px 6px; border-radius: 3px; margin: 0 5px;">探究階段</span>
+                        <span style="background-color: rgba(46, 204, 113, 0.3); padding: 2px 6px; border-radius: 3px; margin: 0 5px;">系統思考</span>
+                        <span style="background-color: rgba(231, 76, 60, 0.3); padding: 2px 6px; border-radius: 3px; margin: 0 5px;">AI使用</span>
+                        <span style="background-color: rgba(155, 89, 182, 0.3); padding: 2px 6px; border-radius: 3px; margin: 0 5px;">混合標籤</span>
+                    </div>
+                    <div style="padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #fafafa; line-height: 1.8;">
+                        ${generateHighlightedTextForPDF()}
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 style="font-size: 18px; margin-bottom: 15px; color: #2c3e50;">標記詳細列表</h2>
+            `;
+            
+            labeledSegments.forEach((segment, index) => {
+                const labelsList = [];
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        if (typeof labelItem === 'string') {
+                            labelsList.push(labelItem);
+                        } else {
+                            labelsList.push(`${labelItem.label}(${labelItem.score}分)`);
+                        }
+                    });
+                });
+                
+                htmlContent += `
+                    <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                        <div style="font-weight: bold; margin-bottom: 8px;">[${index + 1}] 標記內容：</div>
+                        <div style="margin-bottom: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 3px;">
+                            ${escapeHtml(segment.text)}
+                        </div>
+                        <div style="color: #666; font-size: 12px;">
+                            <strong>標籤：</strong>${labelsList.join(', ')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            htmlContent += '</div>';
+            element.innerHTML = htmlContent;
+            
+            // 將元素暫時添加到頁面（但不顯示）
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            document.body.appendChild(element);
+            
+            // 使用html2canvas轉換為圖片，然後轉為PDF
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // 計算PDF尺寸
+                const imgWidth = 210; // A4寬度(mm)
+                const pageHeight = 295; // A4高度(mm)
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                const doc = new jsPDF('p', 'mm');
+                
+                // 如果內容超過一頁，需要分頁
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // 移除臨時元素
+                document.body.removeChild(element);
+                
+                // 儲存PDF
+                doc.save(`${filename}.pdf`);
+            }).catch(error => {
+                console.error('PDF生成失敗:', error);
+                alert('PDF生成失敗，請檢查瀏覽器控制台了解詳細錯誤資訊');
+                // 移除臨時元素
+                if (document.body.contains(element)) {
+                    document.body.removeChild(element);
+                }
+            });
+        }
+        
+        // 為檔案名稱輸入框添加即時預覽
+        document.addEventListener('DOMContentLoaded', function() {
+            const filenameInput = document.getElementById('filenameInput');
+            if (filenameInput) {
+                filenameInput.addEventListener('input', updateFilenamePreview);
+                filenameInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        confirmExportPDF();
+                    }
+                });
+            }
+        });
+        
+        // 點擊modal外部關閉
+        window.onclick = function(event) {
+            const importModal = document.getElementById('importModal');
+            const filenameModal = document.getElementById('filenameModal');
+            
+            if (event.target == importModal) {
+                closeImportModal();
+            } else if (event.target == filenameModal) {
+                closeFilenameModal();
+            }
+        }
+    </script>
+</body>
+</html>
