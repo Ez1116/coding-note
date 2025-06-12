@@ -11,12 +11,13 @@ An interactive statistics learning tool featuring:
 - Gradient background design with responsive layout
 - Educational content in Traditional Chinese
 
-### 🏷️ Ezivo.html
+### 🏷️ Ezivo.html & Ezivo-en.html
 A qualitative data labeling system with:
 - Text annotation and tagging functionality
 - PDF export capabilities using jsPDF and html2canvas
 - Professional interface for qualitative research
 - Data categorization and analysis tools
+- Both Mandarin Chinese and Englihs versions
 
 ### 📈 Visualizing multiple relationships.html
 A three-variable relationship visualization tool including:
