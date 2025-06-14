@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教師評語產生系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Sans TC", "Microsoft JhengHei";
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #9370DB 0%, #8A2BE2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .student-name-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .student-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .evaluation-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .evaluation-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .evaluation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .evaluation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .score-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .score-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .score-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            min-width: 45px;
+        }
+
+        .score-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .score-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .score-btn.no-score {
+            background: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+
+        .example-input-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .example-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .example-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .example-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .example-hint {
+            display: block;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .tone-selection, .style-selection {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            border: 2px solid #e0e6ff;
+        }
+
+        .tone-selection {
+            background: #f0f8ff;
+            border-color: #b3d9ff;
+        }
+
+        .tone-label, .style-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tone-options, .style-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tone-option, .style-option {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .tone-option .tone-content,
+        .style-option .style-content {
+            flex: 1;
+        }
+
+        .tone-option:hover, .style-option:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .tone-option input[type="radio"], .style-option input[type="radio"] {
+            margin-right: 12px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .tone-option input[type="radio"]:checked + .tone-content .tone-name,
+        .style-option input[type="radio"]:checked + .style-content .style-name {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tone-option input[type="radio"]:checked + .tone-content .tone-desc,
+        .style-option input[type="radio"]:checked + .style-content .style-desc {
+            color: #667eea;
+        }
+
+        .tone-name, .style-name {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .tone-desc, .style-desc {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: #17a2b8;
+        }
+
+        .comment-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 30px;
+        }
+
+        .radar-chart-section {
+            margin-top: 20px;
+        }
+
+        .radar-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .radar-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #9370DB;
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .reset-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2rem;
+            
+            .style-options {
+                justify-content: center;
+            }
+            
+            .style-option {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .style-option input[type="radio"] {
+                margin: 0 auto 8px auto;
+            }
+            
+            .score-buttons {
+                justify-content: center;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>教師評語產生系統</h1>
+            <p>透過五個向度的評分，快速生成正向鼓勵的學生評語</p>
+        </div>
+
+        <div class="input-section">
+            <div class="form-group">
+                <label for="studentName">學生姓名</label>
+                <input type="text" id="studentName" class="student-name-input" placeholder="請輸入學生姓名">
+            </div>
+
+            <div id="evaluationItems">
+                <!-- 評量項目將由 JavaScript 動態生成 -->
+            </div>
+
+            <div class="tone-selection">
+                <label class="tone-label">選擇評語語氣</label>
+                <div class="tone-options">
+                    <label class="tone-option">
+                        <input type="radio" name="commentTone" value="encouraging" checked>
+                        <div class="tone-content">
+                            <span class="tone-name">積極鼓勵</span>
+                            <span class="tone-desc">充滿正能量的鼓勵性語句，適合日常激勵</span>
+                        </div>
+                    </label>
+                    <label class="tone-option">
+                        <input type="radio" name="commentTone" value="neutral">
+                        <div class="tone-content">
+                            <span class="tone-name">中性評價</span>
+                            <span class="tone-desc">客觀事實的評價描述，適合正式評量</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="style-selection">
+                <label class="style-label">選擇評語風格</label>
+                <div class="style-options">
+                    <label class="style-option">
+                        <input type="radio" name="commentStyle" value="style1" checked>
+                        <div class="style-content">
+                            <span class="style-name">多樣化銜接詞</span>
+                            <span class="style-desc">使用「在...方面」、「...的表現」等多樣化銜接</span>
+                        </div>
+                    </label>
+                    <label class="style-option">
+                        <input type="radio" name="commentStyle" value="style2">
+                        <div class="style-content">
+                            <span class="style-name">自然語句融合</span>
+                            <span class="style-desc">不提向度名稱，直接描述表現</span>
+                        </div>
+                    </label>
+                    <label class="style-option">
+                        <input type="radio" name="commentStyle" value="style3">
+                        <div class="style-content">
+                            <span class="style-name">邏輯分組連接</span>
+                            <span class="style-desc">將相關向度分組，用邏輯連接詞串聯</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button class="generate-btn" onclick="generateComment()">生成評語</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <h2 class="result-title">生成的評語</h2>
+                <div>
+                    <button class="copy-btn" onclick="copyComment()">複製評語</button>
+                    <button class="reset-btn" onclick="resetForm()">重新開始</button>
+                </div>
+            </div>
+            <div class="comment-text" id="commentText"></div>
+            
+            <div class="radar-chart-section">
+                <h3 class="radar-title">能力雷達圖</h3>
+                <div class="radar-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 評量向度資料
+        const dimensions = [
+            {
+                id: 'attitude',
+                name: '上課態度',
+                comments: {
+                    encouraging: [
+                        '還沒開始展現出學習的狀態{EXAMPLE}，沒關係，我們期待看到你下一次的參與與改變！',
+                        '已經開始進入教室{EXAMPLE}，下一步是更專注地投入課程，相信你辦得到！',
+                        '有時能專心、有時會分心{EXAMPLE}，你的參與是個起點，再加一點專注就更棒了！',
+                        '上課態度穩定{EXAMPLE}，持續努力會讓你在課堂上更有自信。',
+                        '上課表現穩定{EXAMPLE}，能積極回應老師、參與活動，是大家學習的榜樣之一。',
+                        '總是全神貫注，積極發問與互動{EXAMPLE}，讓課堂因你而更有活力！'
+                    ],
+                    neutral: [
+                        '目前在課堂參與方面尚待改進{EXAMPLE}，建議增加專注度。',
+                        '開始在課堂中展現學習意願{EXAMPLE}，仍需持續投入。',
+                        '上課態度表現不穩定{EXAMPLE}，時有分心情況。',
+                        '上課態度基本穩定{EXAMPLE}，能維持適當的專注度。',
+                        '上課表現良好{EXAMPLE}，能主動參與課堂活動和回應。',
+                        '上課態度優秀{EXAMPLE}，持續展現高度專注和積極參與。'
+                    ]
+                }
+            },
+            {
+                id: 'exam',
+                name: '考試分數',
+                comments: {
+                    encouraging: [
+                        '考試的出席率不理想{EXAMPLE}，希望下次能看到你勇敢地嘗試，讓我們一起迎接進步的開始！',
+                        '雖然成績還不理想{EXAMPLE}，但你已經踏出第一步，每一題的嘗試都很有意義。',
+                        '掌握了一些基礎內容{EXAMPLE}，繼續練習，相信會越來越熟悉！',
+                        '在理解基礎概念上已有穩定的成果{EXAMPLE}，再多複習就能更上一層樓。',
+                        '展現出良好的理解力{EXAMPLE}，已經能靈活運用知識，持續維持會更棒！',
+                        '考試表現非常優秀{EXAMPLE}，代表你不只理解，更能靈活運用學到的知識，太棒了！'
+                    ],
+                    neutral: [
+                        '考試出席情況需要改善{EXAMPLE}，建議積極參與測驗。',
+                        '考試成績目前仍有進步空間{EXAMPLE}，需加強基礎概念理解。',
+                        '已掌握部分基礎內容{EXAMPLE}，但仍需持續加強練習。',
+                        '考試成績達到基本要求{EXAMPLE}，在基礎概念理解上表現穩定。',
+                        '考試表現良好{EXAMPLE}，能有效理解和運用學習內容。',
+                        '考試成績優異{EXAMPLE}，展現出扎實的知識基礎和應用能力。'
+                    ]
+                }
+            },
+            {
+                id: 'notes',
+                name: '筆記分數',
+                comments: {
+                    encouraging: [
+                        '這次還沒有筆記的紀錄{EXAMPLE}，但下次開始動筆就會是很棒的開始！',
+                        '有記下一些內容{EXAMPLE}，下一次可以試著抓出更多重點喔！',
+                        '已開始記錄重要概念了{EXAMPLE}，若能更有條理，效果會更好。',
+                        '筆記已有一定系統{EXAMPLE}，建議嘗試加些整理和自己的想法，會更有幫助。',
+                        '筆記清楚、有條理{EXAMPLE}，學習的痕跡非常明顯，做得很好！',
+                        '筆記不但完整{EXAMPLE}，而且有整理與延伸思考，是極具參考價值的作品！'
+                    ],
+                    neutral: [
+                        '目前缺乏筆記記錄{EXAMPLE}，建議開始養成記錄習慣。',
+                        '筆記內容較為簡略{EXAMPLE}，需要增加重點記錄的完整性。',
+                        '已開始記錄重要概念{EXAMPLE}，但組織結構仍需改善。',
+                        '筆記具有基本的系統性{EXAMPLE}，內容記錄適度。',
+                        '筆記記錄清楚有條理{EXAMPLE}，能有效掌握學習重點。',
+                        '筆記內容完整且具有個人整理和思考{EXAMPLE}，品質優良。'
+                    ]
+                }
+            },
+            {
+                id: 'peer',
+                name: '同儕關係',
+                comments: {
+                    encouraging: [
+                        '與同學互動的機會還不多{EXAMPLE}，試著主動參與，相信會有不一樣的收穫！',
+                        '正在學習如何與同儕相處{EXAMPLE}，偶爾會遇到挑戰，但這正是成長的契機。',
+                        '與部分同學相處融洽{EXAMPLE}，再多一點主動互動，會讓你更融入班級喔。',
+                        '能與大家和平相處{EXAMPLE}，表現出基本的合作與尊重，是值得肯定的！',
+                        '樂於與人合作{EXAMPLE}，也能傾聽與溝通，是團體中的好夥伴！',
+                        '是促進班級氣氛的關鍵人物{EXAMPLE}，總是帶來正面影響，讓同儕感到溫暖！'
+                    ],
+                    neutral: [
+                        '與同學互動頻率較低{EXAMPLE}，建議增加主動參與班級活動。',
+                        '在同儕相處方面仍在學習適應{EXAMPLE}，偶有互動上的困難。',
+                        '與部分同學相處良好{EXAMPLE}，但整體社交參與度可再提升。',
+                        '能與同學和平相處{EXAMPLE}，展現基本的合作態度和人際尊重。',
+                        '同儕關係良好{EXAMPLE}，具備合作溝通能力，是班級中的協調者。',
+                        '在班級中發揮正向影響力{EXAMPLE}，同儕關係和諧，社交能力優秀。'
+                    ]
+                }
+            },
+            {
+                id: 'selflearn',
+                name: '自主學習',
+                comments: {
+                    encouraging: [
+                        '還沒展開自主學習的旅程{EXAMPLE}，沒關係，下一步是最重要的開始。',
+                        '已經開始注意課業了{EXAMPLE}，若能自己安排一些練習，就更進步囉！',
+                        '願意在需要時學習{EXAMPLE}，再多一些主動探索就能看見更大的進步。',
+                        '能完成老師安排的任務{EXAMPLE}，若能主動延伸學習會更理想。',
+                        '具備良好的學習規劃{EXAMPLE}，能掌握進度，也會找資源幫助自己學習。',
+                        '展現出強烈的學習動力與責任感{EXAMPLE}，是自主學習的典範！'
+                    ],
+                    neutral: [
+                        '自主學習能力尚待開發{EXAMPLE}，建議培養主動學習的習慣。',
+                        '開始關注個人學習進度{EXAMPLE}，但自主安排練習的能力需要加強。',
+                        '具有基本的學習自覺性{EXAMPLE}，但主動探索學習的積極度可再提升。',
+                        '能按時完成指定作業{EXAMPLE}，自主延伸學習的表現有待加強。',
+                        '展現良好的學習規劃能力{EXAMPLE}，能主動尋找學習資源並掌握進度。',
+                        '自主學習能力優秀{EXAMPLE}，具備強烈的學習動機和良好的自我管理能力。'
+                    ]
+                }
+            }
+        ];
+
+        // 儲存分數狀態
+        let scores = {};
+        
+        // 儲存具體事例
+        let examples = {};
+        
+        // 儲存雷達圖實例
+        let radarChart = null;
+
+        // 初始化評量項目
+        function initializeEvaluationItems() {
+            const container = document.getElementById('evaluationItems');
+            
+            dimensions.forEach(dim => {
+                const itemHTML = `
+                    <div class="evaluation-item">
+                        <div class="evaluation-header">
+                            <span class="evaluation-title">${dim.name}</span>
+                            <span class="score-display" id="score-${dim.id}">-</span>
+                        </div>
+                        <div class="score-buttons">
+                            <button class="score-btn no-score" onclick="setScore('${dim.id}', null)">未評分</button>
+                            ${[0, 1, 2, 3, 4, 5].map(score => 
+                                `<button class="score-btn" onclick="setScore('${dim.id}', ${score})">${score}</button>`
+                            ).join('')}
+                        </div>
+                        <div class="example-input-section">
+                            <label class="example-label" for="example-${dim.id}">具體事例 (選填)</label>
+                            <input type="text" id="example-${dim.id}" class="example-input" 
+                                   placeholder="例如：上週主動幫助同學解題、段考期間認真複習..." 
+                                   onchange="setExample('${dim.id}', this.value)">
+                            <small class="example-hint">輸入具體事例可讓評語更加個人化</small>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += itemHTML;
+            });
+        }
+
+        // 設定分數
+        function setScore(dimensionId, score) {
+            if (score === null) {
+                delete scores[dimensionId];
+                document.getElementById(`score-${dimensionId}`).textContent = '-';
+            } else {
+                scores[dimensionId] = score;
+                document.getElementById(`score-${dimensionId}`).textContent = score;
+            }
+            
+            // 更新按鈕狀態
+            const buttons = document.querySelectorAll(`.evaluation-item:has(#score-${dimensionId}) .score-btn`);
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (score === null && btn.classList.contains('no-score')) {
+                    btn.classList.add('active');
+                } else if (btn.textContent === String(score)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // 設定具體事例
+        function setExample(dimensionId, example) {
+            if (example && example.trim()) {
+                examples[dimensionId] = example.trim();
+            } else {
+                delete examples[dimensionId];
+            }
+        }
+
+        // 生成評語
+        function generateComment() {
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!studentName) {
+                alert('請輸入學生姓名');
+                return;
+            }
+            
+            if (Object.keys(scores).length === 0) {
+                alert('請至少評分一個向度');
+                return;
+            }
+            
+            // 取得選擇的語氣和風格
+            const selectedTone = document.querySelector('input[name="commentTone"]:checked').value;
+            const selectedStyle = document.querySelector('input[name="commentStyle"]:checked').value;
+            
+            // 將有分數的向度按分數高低排序
+            const sortedDimensions = Object.entries(scores)
+                .map(([dimId, score]) => {
+                    const dim = dimensions.find(d => d.id === dimId);
+                    let comment = dim.comments[selectedTone][score];
+                    
+                    // 處理具體事例的插入
+                    if (examples[dimId]) {
+                        comment = comment.replace('{EXAMPLE}', `，如${examples[dimId]}`);
+                    } else {
+                        comment = comment.replace('{EXAMPLE}', '');
+                    }
+                    
+                    return {
+                        id: dimId,
+                        name: dim.name,
+                        score: score,
+                        comment: comment
+                    };
+                })
+                .sort((a, b) => b.score - a.score);
+            
+            // 根據選擇的風格生成評語
+            let comment = '';
+            
+            switch(selectedStyle) {
+                case 'style1':
+                    comment = generateStyle1(studentName, sortedDimensions, selectedTone);
+                    break;
+                case 'style2':
+                    comment = generateStyle2(studentName, sortedDimensions, selectedTone);
+                    break;
+                case 'style3':
+                    comment = generateStyle3(studentName, sortedDimensions, selectedTone);
+                    break;
+            }
+            
+            // 顯示結果
+            document.getElementById('commentText').textContent = comment;
+            
+            // 生成雷達圖
+            generateRadarChart();
+            
+            document.getElementById('resultSection').classList.add('show');
+            
+            // 滾動到結果區域
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 風格一：多樣化銜接詞
+        function generateStyle1(studentName, sortedDimensions, selectedTone) {
+            let comment = `${studentName}同學，`;
+            
+            const connectors = {
+                attitude: ['在上課態度方面，', '上課態度上，', '課堂表現方面，'],
+                exam: ['考試的表現顯示', '學習成果顯示', '測驗表現上，'],
+                notes: ['關於筆記習慣，', '在筆記記錄上，', '學習筆記方面，'],
+                peer: ['與同學相處上，', '在同儕互動方面，', '人際關係表現上，'],
+                selflearn: ['至於自主學習，', '在自我學習部分，', '學習自主性方面，']
+            };
+            
+            sortedDimensions.forEach((dim, index) => {
+                const connector = connectors[dim.id][0];
+                
+                if (index === 0) {
+                    comment += `${connector}${dim.comment}`;
+                } else if (index === sortedDimensions.length - 1) {
+                    comment += `另外，${connector}${dim.comment}`;
+                } else {
+                    comment += connector + dim.comment;
+                }
+            });
+            
+            // 根據語氣選擇不同的結尾
+            const endings = {
+                encouraging: '期待看到你持續的成長與進步！',
+                neutral: '建議持續努力，期望未來能有更好的表現。'
+            };
+            
+            comment += endings[selectedTone];
+            return comment;
+        }
+
+        // 風格二：自然語句融合
+        function generateStyle2(studentName, sortedDimensions, selectedTone) {
+            let comment = `${studentName}同學，`;
+            
+            const naturalPhrases = {
+                attitude: {
+                    high: '課堂上的你',
+                    mid: '在學習過程中',
+                    low: '未來在課堂上'
+                },
+                exam: {
+                    high: '學習成果令人欣慰，',
+                    mid: '學習成果顯示',
+                    low: '在知識掌握上'
+                },
+                notes: {
+                    high: '學習記錄相當用心，',
+                    mid: '在記錄學習重點時',
+                    low: '未來記錄學習內容時'
+                },
+                peer: {
+                    high: '你',
+                    mid: '與同學相處時',
+                    low: '在班級互動中'
+                },
+                selflearn: {
+                    high: '學習態度積極主動，',
+                    mid: '此外，',
+                    low: '在課後學習上'
+                }
+            };
+            
+            sortedDimensions.forEach((dim, index) => {
+                const level = dim.score >= 4 ? 'high' : (dim.score >= 2 ? 'mid' : 'low');
+                const phrase = naturalPhrases[dim.id][level];
+                
+                if (index === 0) {
+                    comment += `${phrase}${dim.comment}`;
+                } else if (index === 1) {
+                    comment += `同時，${phrase}${dim.comment}`;
+                } else if (index === sortedDimensions.length - 1) {
+                    comment += `${phrase}${dim.comment}`;
+                } else {
+                    comment += `${phrase}${dim.comment}`;
+                }
+            });
+            
+            // 根據語氣選擇不同的結尾
+            const endings = {
+                encouraging: '相信你會越來越進步！',
+                neutral: '希望能持續保持學習的穩定度。'
+            };
+            
+            comment += endings[selectedTone];
+            return comment;
+        }
+
+        // 風格三：邏輯分組連接
+        function generateStyle3(studentName, sortedDimensions, selectedTone) {
+            let comment = `${studentName}同學，`;
+            
+            // 將向度分組
+            const groups = {
+                classroom: [], // 課堂相關：態度、筆記
+                performance: [], // 表現相關：考試、自主學習
+                social: [] // 社交相關：同儕關係
+            };
+            
+            sortedDimensions.forEach(dim => {
+                if (dim.id === 'attitude' || dim.id === 'notes') {
+                    groups.classroom.push(dim);
+                } else if (dim.id === 'exam' || dim.id === 'selflearn') {
+                    groups.performance.push(dim);
+                } else if (dim.id === 'peer') {
+                    groups.social.push(dim);
+                }
+            });
+            
+            let hasContent = false;
+            
+            // 社交表現
+            if (groups.social.length > 0) {
+                groups.social.forEach(dim => {
+                    comment += `在班級中${dim.comment}`;
+                });
+                hasContent = true;
+            }
+            
+            // 課堂表現
+            if (groups.classroom.length > 0) {
+                if (hasContent) comment += '學習方面，';
+                groups.classroom.forEach((dim, index) => {
+                    if (index === 0) {
+                        comment += dim.comment;
+                    } else {
+                        comment += `同時${dim.comment}`;
+                    }
+                });
+                hasContent = true;
+            }
+            
+            // 學習成果
+            if (groups.performance.length > 0) {
+                if (hasContent) comment += '在學習成果上，';
+                groups.performance.forEach((dim, index) => {
+                    if (index === 0) {
+                        comment += dim.comment;
+                    } else {
+                        comment += `而且${dim.comment}`;
+                    }
+                });
+            }
+            
+            // 根據語氣選擇不同的結尾
+            const endings = {
+                encouraging: '繼續保持這樣的學習態度，一定會有更大的收穫！',
+                neutral: '建議繼續維持目前的學習方向，並尋求進一步改善。'
+            };
+            
+            comment += endings[selectedTone];
+            return comment;
+        }
+
+        // 生成雷達圖
+        function generateRadarChart() {
+            // 準備雷達圖數據
+            const dimensionNames = ['上課態度', '考試分數', '筆記分數', '同儕關係', '自主學習'];
+            const dimensionIds = ['attitude', 'exam', 'notes', 'peer', 'selflearn'];
+            
+            const data = dimensionIds.map(id => scores[id] || 0);
+            
+            // 銷毀現有圖表
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: dimensionNames,
+                    datasets: [{
+                        label: '學生能力評分',
+                        data: data,
+                        backgroundColor: 'rgba(147, 112, 219, 0.2)',
+                        borderColor: 'rgba(147, 112, 219, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(147, 112, 219, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            min: 0,
+                            ticks: {
+                                stepSize: 1,
+                                display: true,
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(147, 112, 219, 0.3)'
+                            },
+                            angleLines: {
+                                color: 'rgba(147, 112, 219, 0.3)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 複製評語
+        function copyComment() {
+            const commentText = document.getElementById('commentText').textContent;
+            
+            navigator.clipboard.writeText(commentText).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.textContent = '已複製！';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '複製評語';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // 舊版瀏覽器相容性處理
+                const textArea = document.createElement('textarea');
+                textArea.value = commentText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.textContent = '已複製！';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '複製評語';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 重置表單
+        function resetForm() {
+            // 清空學生姓名
+            document.getElementById('studentName').value = '';
+            
+            // 重置所有分數
+            scores = {};
+            dimensions.forEach(dim => {
+                setScore(dim.id, null);
+            });
+            
+            // 清空所有具體事例
+            examples = {};
+            dimensions.forEach(dim => {
+                document.getElementById(`example-${dim.id}`).value = '';
+            });
+            
+            // 清除雷達圖
+            if (radarChart) {
+                radarChart.destroy();
+                radarChart = null;
+            }
+            
+            // 隱藏結果區域
+            document.getElementById('resultSection').classList.remove('show');
+            
+            // 滾動到頂部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeEvaluationItems();
+            
+            // 為每個向度設定預設未評分狀態
+            dimensions.forEach(dim => {
+                setScore(dim.id, null);
+                setExample(dim.id, '');
+            });
+        });
+    </script>
+</body>
+</html>
