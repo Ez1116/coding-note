@@ -34,7 +34,7 @@ A three-variable relationship visualization tool including:
 - Responsive design with modern UI elements
 - Statistical relationship analysis tools
 
-### 🎯 TES.html - 教師評語產生系統 (Teacher Comment Generation System)
+### 🎯 Automated teacher feedback.html - 教師評語產生系統 (Teacher Comment Generation System)
 A comprehensive teacher evaluation system featuring:
 - **Five Assessment Dimensions**: Class attitude, exam scores, note-taking, peer relationships, self-directed learning
 - **Automated Comment Generation**: Personalized student feedback based on scoring (0-5 scale)
