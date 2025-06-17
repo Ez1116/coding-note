@@ -11,9 +11,9 @@ An interactive statistics learning tool featuring:
 - Gradient background design with responsive layout
 - Educational content in Traditional Chinese
 
-### 🏷️ Ezivo.html, Ezivo-en.html & Ezivo-CYC.html
+### 🏷️ Ezivo.html & Ezivo-CYC.html
 Advanced qualitative data labeling systems with:
-- **Ezivo.html & Ezivo-en.html**: Text annotation and tagging functionality
+- **Ezivo.html **: Text annotation and tagging functionality (Mandarin version)
   - PDF export capabilities using jsPDF and html2canvas
   - Professional interface for qualitative research
   - Data categorization and analysis tools
@@ -36,14 +36,14 @@ A three-variable relationship visualization tool including:
 
 ### 🎯 Automated teacher feedback.html - 教師評語產生系統 (Teacher Comment Generation System)
 A comprehensive teacher evaluation system featuring:
-- **Five Assessment Dimensions**: Class attitude, exam scores, note-taking, peer relationships, self-directed learning
+- **Six Assessment Dimensions**: Class attitude, exam scores, note-taking, peer relationships, self-directed learning
 - **Automated Comment Generation**: Personalized student feedback based on scoring (0-5 scale)
 - **Multiple Comment Styles**: Three different writing styles with encouraging/neutral tone options
 - **Visual Analytics**: Radar chart showing student capabilities across dimensions
 - **Workflow Optimization**: Streamlined teacher evaluation process with copy-to-clipboard functionality
 - **Professional Interface**: Clean design with responsive layout for efficient use
 
-### 📋 student_survey_form.js
+### 📋 Student_survey_form.js
 A Google Apps Script for automated survey creation featuring:
 - **Purpose**: Creates "期末自然探究學習調查" (Final Natural Science Inquiry Learning Survey)
 - **Survey Content**: 46-question survey covering:
