@@ -13,7 +13,7 @@ An interactive statistics learning tool featuring:
 
 ### 🏷️ Ezivo.html & Ezivo-CYC.html
 Advanced qualitative data labeling systems with:
-- **Ezivo.html **: Text annotation and tagging functionality (Mandarin version)
+- **Ezivo.html**: Text annotation and tagging functionality (Mandarin version)
   - PDF export capabilities using jsPDF and html2canvas
   - Professional interface for qualitative research
   - Data categorization and analysis tools
