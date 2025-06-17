@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yi-Chen (EZ) - Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 導航欄 */
+        .nav-bar {
+            position: fixed;
+            top: 30px;
+            right: 40px;
+            display: flex;
+            gap: 30px;
+            z-index: 1000;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .nav-bar.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+        }
+        
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            padding: 0;
+            filter: drop-shadow(0 0 10px rgba(100, 116, 139, 0.3));
+        }
+        
+        .nav-btn:hover {
+            color: white;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
+        }
+        
+        .nav-btn.active {
+            color: white;
+        }
+        
+        /* 頁面容器 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px;
+            padding-bottom: 200px; /* 為 footer 留出空間 */
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateX(30px);
+            pointer-events: none;
+            visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 主頁保持垂直置中 */
+        #home {
+            align-items: center;
+        }
+        
+        /* Honors 和 Publications 頁面從頂部開始 */
+        #honors, #publications {
+            align-items: flex-start;
+            padding-top: 120px; /* 給導航留出空間 */
+        }
+        
+        .page.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+            visibility: visible;
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        
+        .page.sliding-out {
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+        }
+        
+        /* 主頁樣式 */
+        .logo-container {
+            margin-bottom: 40px;
+            opacity: 0;
+        }
+        
+        .text-logo {
+            font-size: 48px;
+            font-weight: 700;
+            color: #64748b;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(100, 116, 139, 0.3));
+        }
+        
+        .text-logo:hover {
+            color: white;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
+        }
+        
+        .container {
+            max-width: 1200px;
+            padding: 40px;
+            text-align: left;
+        }
+        
+        .intro-text {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            opacity: 0;
+        }
+        
+        .main-text {
+            font-size: clamp(1.2rem, 3vw, 2.2rem);
+            font-weight: 600;
+            line-height: 1.6;
+            color: white;
+            opacity: 0;
+            max-width: 1100px;
+        }
+        
+        /* 淡入效果 */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+        
+        /* 隱藏文字 */
+        .hidden {
+            opacity: 0;
+        }
+        
+        /* 防止布局抖動 */
+        .typing-container {
+            min-height: 200px;
+            position: relative;
+        }
+        
+        /* 工作經歷區塊 */
+        .work-section {
+            margin-top: 80px;
+            opacity: 0;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f7dc6f;
+            margin-bottom: 60px;
+            letter-spacing: -0.02em;
+        }
+        
+        .work-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            max-width: 1100px;
+        }
+        
+        .work-item {
+            position: relative;
+        }
+        
+        .work-header {
+            margin-bottom: 20px;
+        }
+        
+        .job-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin: 0 0 10px 0;
+        }
+        
+        .date {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: 400;
+        }
+        
+        .company {
+            font-size: 1.1rem;
+            color: white;
+            font-weight: 500;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        
+        .work-details {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .work-details li {
+            font-size: 1rem;
+            color: #94a3b8;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .work-details li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #64748b;
+        }
+        
+        .work-details em {
+            font-style: italic;
+            color: #94a3b8;
+        }
+        
+        /* Honors 和 Publications 頁面樣式 */
+        .content-container {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .page-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            color: #f7dc6f;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+        
+        .content-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .content-list li {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .content-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #f7dc6f;
+            font-size: 1.5rem;
+        }
+        
+        .publication-item {
+            margin-bottom: 35px;
+            padding-left: 30px;
+            position: relative;
+            color: #e2e8f0;
+            line-height: 1.8;
+        }
+        
+        .publication-item:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #f7dc6f;
+            font-size: 1.5rem;
+        }
+        
+        .publication-item em {
+            font-style: italic;
+            color: #94a3b8;
+        }
+        
+        /* Footer 聯絡資料區塊 */
+        .footer-section {
+            width: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        
+        .footer-divider {
+            width: 100%;
+            height: 1px;
+            background-color: #334155;
+            margin-bottom: 40px;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 40px;
+        }
+        
+        .footer-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-link:hover {
+            color: #e2e8f0;
+        }
+        
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .contact-email {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .contact-email:hover {
+            color: #e2e8f0;
+        }
+        
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .work-grid {
+                grid-template-columns: 1fr;
+                gap: 60px;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .nav-bar {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .nav-btn {
+                padding: 5px 10px;
+                font-size: 14px;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .contact-info {
+                align-items: center;
+            }
+            
+            /* 手機版調整 Honors 和 Publications 的頂部間距 */
+            #honors, #publications {
+                padding-top: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <nav class="nav-bar" id="navBar">
+        <button class="nav-btn active" onclick="showPage('home')">Home</button>
+        <button class="nav-btn" onclick="showPage('honors')">Honors</button>
+        <button class="nav-btn" onclick="showPage('publications')">Publications</button>
+        <a class="nav-btn" href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+
+    <!-- 主頁 -->
+    <div id="home" class="page active">
+        <div class="container">
+            <!-- Logo -->
+            <div class="logo-container" id="logoContainer">
+                <div class="text-logo" onclick="resetAnimation()" style="cursor: pointer;">
+                    EZ
+                </div>
+            </div>
+            
+            <!-- 小標題 -->
+            <div class="intro-text" id="introText">HI, MY NAME IS YI-CHEN (Ez)</div>
+            
+            <!-- 主要文字內容 -->
+            <div class="typing-container">
+                <div class="main-text hidden" id="mainText">
+                    <span id="typingText"></span>
+                </div>
+            </div>
+            
+            <!-- 工作經歷區塊 -->
+            <div class="work-section hidden" id="workSection">
+                <h2 class="section-title">WORK EXPERIENCE</h2>
+                
+                <div class="work-grid">
+                    <!-- 左側工作 -->
+                    <div class="work-item">
+                        <div class="work-header">
+                            <h3 class="job-title">Research Assistant</h3>
+                            <span class="date">09/2021 - 2023</span>
+                        </div>
+                        <div class="company">Science Education Centre,<br>National Taiwan Normal University</div>
+                        <ul class="work-details">
+                            <li>International collaboration project:<br>
+                                <em>STEM Education for Global Citizens</em></li>
+                            <li>Science education - systems thinking and inquiry</li>
+                            <li>Environmental education &<br>
+                                Marine environmental education</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 右側工作 -->
+                    <div class="work-item">
+                        <div class="work-header">
+                            <h3 class="job-title">Science teacher</h3>
+                            <span class="date">08/2016 - now</span>
+                        </div>
+                        <ul class="work-details" style="margin-top: 20px;">
+                            <li>Teach Earth Science, Biology, Physics, and Chemistry for students aged from 12-18</li>
+                            <li>Design teaching and learning materials for science education</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer 聯絡資料 -->
+        <div class="footer-section">
+            <div class="footer-divider"></div>
+            <div class="footer-content">
+                <div class="contact-info">
+                    <a href="mailto:easy0110111@gmail.com" class="contact-email">easy0110111@gmail.com</a>
+                    <a href="mailto:ezlin@ntnu.edu.tw" class="contact-email">ezlin@ntnu.edu.tw</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Honors 頁面 -->
+    <div id="honors" class="page">
+        <div class="content-container">
+            <h1 class="page-title">HONORS</h1>
+            <ul class="content-list">
+                <li>NSTC Subsidy for Excellent Doctoral Scholarship, National Science and Technology Council 2024.</li>
+                <li>Best Conference Paper Award, 4th Eurasian Conference on Educational Innovation 2021.</li>
+                <li>Honorary member of the society, The Phi Tau Phi Honor Society of the Republic of China.</li>
+                <li>Valedictorian, Faculty of Science, National Taiwan Normal University</li>
+            </ul>
+        </div>
+        
+        <!-- Footer 聯絡資料 -->
+        <div class="footer-section">
+            <div class="footer-divider"></div>
+            <div class="footer-content">
+                <div class="contact-info">
+                    <a href="mailto:easy0110111@gmail.com" class="contact-email">easy0110111@gmail.com</a>
+                    <a href="mailto:ezlin@ntnu.edu.tw" class="contact-email">ezlin@ntnu.edu.tw</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publications 頁面 -->
+    <div id="publications" class="page">
+        <div class="content-container">
+            <h1 class="page-title">PUBLICATIONS</h1>
+            <div class="publication-item">
+                Lin et al. (2021). Perceived behavioral control as a mediator between attitudes and intentions toward marine responsible environmental behavior. <em>Water, 13</em>(5), 580.
+            </div>
+            <div class="publication-item">
+                Liu, G.-Y., Lin, Y.-C. & Yeh, T.-K. How to Motivate Individuals to Take Responsible Ocean Action: the Mediate Effect of Attitude towards the Ocean. (Internal Journal of Environmental Research and Public Health)
+            </div>
+        </div>
+        
+        <!-- Footer 聯絡資料 -->
+        <div class="footer-section">
+            <div class="footer-divider"></div>
+            <div class="footer-content">
+                <div class="contact-info">
+                    <a href="mailto:easy0110111@gmail.com" class="contact-email">easy0110111@gmail.com</a>
+                    <a href="mailto:ezlin@ntnu.edu.tw" class="contact-email">ezlin@ntnu.edu.tw</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSpeed = 'normal';
+        let isAnimating = false;
+        let hasAnimated = false; // 記錄是否已經播放過動畫
+        const fullText = "Science education researcher from Taiwan. I'm interested in scientific inquiry, systems thinking, and digital learning.";
+        
+        let lastScrollY = 0;
+        let isNavVisible = true;
+        
+        // 滾動監聽器
+        function handleScroll() {
+            const navBar = document.getElementById('navBar');
+            const currentScrollY = window.scrollY;
+            
+            // 如果在頁面頂部附近（20px 以內），顯示導航
+            if (currentScrollY <= 20) {
+                if (!isNavVisible) {
+                    navBar.classList.remove('hidden');
+                    isNavVisible = true;
+                }
+            } else {
+                // 如果不在頂部，隱藏導航
+                if (isNavVisible) {
+                    navBar.classList.add('hidden');
+                    isNavVisible = false;
+                }
+            }
+            
+            lastScrollY = currentScrollY;
+        }
+        
+        // 添加滾動事件監聽器，使用節流來提高效能
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(handleScroll, 10);
+        });
+
+        // 頁面切換功能
+        function showPage(pageName) {
+            const currentPage = document.querySelector('.page.active');
+            const newPage = document.getElementById(pageName);
+            
+            // 如果點擊的是當前頁面，不做任何動作
+            if (currentPage === newPage) return;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 處理頁面切換
+            if (currentPage) {
+                currentPage.classList.add('sliding-out');
+                currentPage.classList.remove('active');
+                
+                // 等待滑出動畫完成後，切換頁面
+                setTimeout(() => {
+                    currentPage.classList.remove('sliding-out');
+                    newPage.classList.add('active');
+                    
+                    // 切換頁面後回到頂部並顯示導航
+                    window.scrollTo(0, 0);
+                    const navBar = document.getElementById('navBar');
+                    navBar.classList.remove('hidden');
+                    isNavVisible = true;
+                    
+                    // 如果切換到主頁且已經播放過動畫，直接顯示完成狀態
+                    if (pageName === 'home' && hasAnimated) {
+                        showCompletedState();
+                    }
+                }, 300);
+            } else {
+                // 如果沒有當前頁面，直接顯示新頁面
+                newPage.classList.add('active');
+            }
+        }
+
+        function typeText(element, text, callback) {
+            let i = 0;
+            element.textContent = '';
+            
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent = text.slice(0, i + 1);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    if (callback) callback();
+                }
+            }, 33); // 每個字符 33ms (原本50ms的1.5倍速)
+        }
+
+        function showElement(element, delay = 0) {
+            setTimeout(() => {
+                element.classList.remove('hidden');
+                element.classList.add('fade-in');
+            }, delay);
+        }
+
+        function hideAllElements() {
+            // 立即隱藏所有元素，不使用動畫
+            const logoContainer = document.getElementById('logoContainer');
+            const introText = document.getElementById('introText');
+            const mainText = document.getElementById('mainText');
+            const workSection = document.getElementById('workSection');
+            
+            logoContainer.classList.remove('fade-in');
+            logoContainer.style.opacity = '0';
+            logoContainer.style.transition = 'none';
+            
+            introText.classList.remove('fade-in');
+            introText.style.opacity = '0';
+            introText.style.transition = 'none';
+            
+            mainText.classList.remove('fade-in');
+            mainText.classList.add('hidden');
+            mainText.style.transition = 'none';
+            
+            document.getElementById('typingText').textContent = '';
+            
+            workSection.classList.remove('fade-in');
+            workSection.classList.add('hidden');
+            workSection.style.transition = 'none';
+            
+            // 恢復 transition
+            setTimeout(() => {
+                logoContainer.style.transition = '';
+                introText.style.transition = '';
+                mainText.style.transition = '';
+                workSection.style.transition = '';
+            }, 50);
+        }
+
+        function showCompletedState() {
+            // 直接顯示所有元素的完成狀態
+            const logoContainer = document.getElementById('logoContainer');
+            const introText = document.getElementById('introText');
+            const mainText = document.getElementById('mainText');
+            const typingText = document.getElementById('typingText');
+            const workSection = document.getElementById('workSection');
+            
+            // 立即顯示所有元素
+            logoContainer.style.opacity = '1';
+            logoContainer.classList.add('fade-in');
+            
+            introText.style.opacity = '1';
+            introText.classList.add('fade-in');
+            
+            mainText.classList.remove('hidden');
+            mainText.style.opacity = '1';
+            typingText.textContent = fullText;
+            
+            workSection.classList.remove('hidden');
+            workSection.style.opacity = '1';
+            workSection.classList.add('fade-in');
+        }
+
+        function startAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            hasAnimated = true; // 標記已經播放過動畫
+            
+            // 重置所有元素
+            hideAllElements();
+            
+            // 步驟 1: 顯示 Logo (延遲 300ms)
+            setTimeout(() => {
+                showElement(document.getElementById('logoContainer'));
+            }, 300);
+            
+            // 步驟 2: 顯示小標題 (延遲 800ms)
+            setTimeout(() => {
+                showElement(document.getElementById('introText'));
+            }, 800);
+            
+            // 步驟 3: 顯示主要文字容器並開始打字 (延遲 1300ms)
+            setTimeout(() => {
+                const mainTextContainer = document.getElementById('mainText');
+                mainTextContainer.classList.remove('hidden');
+                mainTextContainer.style.opacity = '1';
+                
+                const typingTextElement = document.getElementById('typingText');
+                typeText(typingTextElement, fullText, () => {
+                    // 打字完成後顯示工作經歷
+                    setTimeout(() => {
+                        showElement(document.getElementById('workSection'));
+                        setTimeout(() => {
+                            isAnimating = false;
+                        }, 500);
+                    }, 800);
+                });
+            }, 1300);
+        }
+
+        function resetAnimation() {
+            hasAnimated = false; // 重置動畫狀態
+            isAnimating = false;
+            startAnimation();
+        }
+
+        // 頁面載入時自動開始動畫
+        window.addEventListener('load', () => {
+            setTimeout(startAnimation, 500);
+        });
+    </script>
+</body>
+</html>
