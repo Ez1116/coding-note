@@ -2542,6 +2542,15 @@
             }
             
             alert('評語已成功儲存！');
+            
+            // 自動跳轉到學生選擇區域
+            const studentSelectorContainer = document.querySelector('.student-selector-container');
+            if (studentSelectorContainer) {
+                studentSelectorContainer.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }
         }
 
         // 版本切換功能
