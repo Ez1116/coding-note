@@ -27,7 +27,7 @@ Advanced qualitative data labeling systems with:
   - PDF export with labeled text and analytics
   - Data persistence with local storage
   - Designed for academic research and content analysis
-- **Ezivo--fig-CYC.html**: Adapted version from Ezivo-CYC
+- **Ezivo-fig-CYC.html**: Adapted version from Ezivo-CYC
   - Sophisticated image coding and annotation system
 
 ### 📈 Visualizing multiple relationships.html
