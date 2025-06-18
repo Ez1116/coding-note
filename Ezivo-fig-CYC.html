@@ -1,0 +1,3886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualitative Image Annotation System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+        
+        .header p {
+            font-style: italic;
+            font-weight: 300;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .text-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        #textContent {
+            min-height: 400px;
+            padding: 20px;
+            line-height: 2;
+            font-size: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            white-space: pre-wrap;
+            user-select: text;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        
+        .labeled-segment {
+            cursor: pointer;
+            position: relative;
+            margin: 0 1px;
+            font-weight: 500;
+            text-shadow: 0 0 1px rgba(255,255,255,0.8);
+        }
+        
+        .labeled-segment:hover::after {
+            content: attr(data-labels);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        
+        .overlapping-segment {
+            background-color: rgba(255, 107, 53, 0.15);
+            border-bottom: 2px solid #ff6b35;
+            font-weight: 600;
+            padding: 1px 2px;
+            border-radius: 3px;
+        }
+        
+        .label-index {
+            font-weight: bold;
+            font-size: 11px;
+            margin-right: 2px;
+            text-decoration: none;
+        }
+        
+        .temp-index {
+            animation: pulse-index 1s ease-in-out infinite;
+        }
+        
+        .label-category {
+            margin-bottom: 20px;
+        }
+        
+        .label-category h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: normal;
+            letter-spacing: 0.3px;
+        }
+        
+        .label-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .label-tag {
+            padding: 6px 12px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        
+        .label-tag:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .label-tag.active {
+            color: white;
+        }
+        
+        .label-tag.inquiry { border-color: #3498db; }
+        .label-tag.inquiry.active { background-color: #3498db; }
+        
+        .label-tag.systems { border-color: #2ecc71; }
+        .label-tag.systems.active { background-color: #2ecc71; }
+        
+        .label-tag.ai { border-color: #e74c3c; }
+        .label-tag.ai.active { background-color: #e74c3c; }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .stats-panel {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stats-panel h2 {
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+        
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .stats-table th,
+        .stats-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .stats-table th {
+            background-color: #f8f9fa;
+            font-weight: normal;
+            color: #2c3e50;
+            letter-spacing: 0.3px;
+        }
+        
+        .stats-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 {
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        #textInput {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        
+        .selection-info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .labeled-items-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .labeled-items-list h3 {
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+        
+        .labeled-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .labeled-item-text {
+            flex: 1;
+            margin-right: 10px;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        
+        .labeled-item-labels {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .label-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        
+        .label-badge.inquiry { background-color: #3498db; }
+        .label-badge.systems { background-color: #2ecc71; }
+        .label-badge.ai { background-color: #e74c3c; }
+        
+        .score-selector {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .score-selector.active {
+            display: block;
+        }
+        
+        .score-selector h4 {
+            font-weight: normal;
+            letter-spacing: 0.3px;
+        }
+        
+        .score-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .score-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        
+        .score-btn:hover {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .score-btn.selected {
+            background-color: #2c3e50;
+            color: white;
+            border-color: #2c3e50;
+        }
+        
+        .skip-score-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-left: 10px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        
+        .skip-score-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .label-with-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .score-badge {
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .temp-highlight {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 2px 4px;
+            border-radius: 3px;
+            animation: pulse 1s ease-in-out infinite;
+            font-weight: 600;
+            text-shadow: 0 0 2px rgba(255,255,255,0.9);
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+            }
+            70% {
+                opacity: 0.9;
+                box-shadow: 0 0 0 5px rgba(255, 193, 7, 0);
+            }
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+            }
+        }
+        
+        @keyframes pulse-index {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .scoring-text-preview {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-style: italic;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .config-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        
+        .config-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: normal;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        
+        .config-input-small {
+            width: 60px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 5px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            text-align: center;
+        }
+        
+        .category-config {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+        }
+        
+        .tag-config {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .tag-config input[type="text"] {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .color-picker {
+            width: 40px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .add-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .add-btn:hover {
+            background-color: #219a52;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+        
+        /* Drawing Tools Styles */
+        .drawing-tools {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .tool-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tool-group label {
+            font-weight: 500;
+            color: #2c3e50;
+            min-width: 100px;
+        }
+        
+        .tool-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        
+        .tool-btn:hover {
+            background-color: #f0f0f0;
+            border-color: #3498db;
+        }
+        
+        .tool-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        /* Canvas Styles */
+        .canvas-container {
+            position: relative;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+        }
+        
+        #imageCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+        
+        #canvasPlaceholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            background-color: #fafafa;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .canvas-container.has-image #canvasPlaceholder {
+            display: none;
+        }
+        
+        .canvas-container.has-image #imageCanvas {
+            display: block;
+        }
+        
+        /* Brush thickness control */
+        #brushThickness {
+            width: 100px;
+            margin: 0 10px;
+        }
+        
+        #thicknessValue {
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 20px;
+            display: inline-block;
+        }
+        
+        /* Image Navigation Styles */
+        .image-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .nav-info {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-controls .btn {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        
+        /* Image Reorder Styles */
+        .image-reorder-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+        
+        .image-reorder-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: move;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .image-reorder-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #3498db;
+        }
+        
+        .image-reorder-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .image-reorder-item.drag-over {
+            border-color: #3498db;
+            background-color: #e3f2fd;
+        }
+        
+        .image-reorder-item .drag-handle {
+            margin-right: 15px;
+            color: #666;
+            font-size: 18px;
+            cursor: grab;
+        }
+        
+        .image-reorder-item .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .image-reorder-item .image-thumbnail {
+            width: 60px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+            border: 1px solid #ddd;
+        }
+        
+        .image-reorder-item .image-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .image-reorder-item .image-name {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+        
+        .image-reorder-item .image-details {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .image-reorder-item .image-order {
+            background-color: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                position: static;
+            }
+            
+            .tag-config {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .tag-config > * {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Qualitative Image Annotation System</h1>
+            <p>Draw annotations and assign labels to analyze image content</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="text-panel">
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="showImportModal()">Import Image</button>
+                    <button class="btn btn-secondary" onclick="showConfigModal()">Configure Labels</button>
+                    <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+                </div>
+                
+                <!-- Drawing Tools Panel -->
+                <div class="drawing-tools">
+                    <div class="tool-group">
+                        <label>Drawing Tools:</label>
+                        <button id="lineTool" class="tool-btn active" onclick="selectTool('line')">Line</button>
+                        <button id="rectangleTool" class="tool-btn" onclick="selectTool('rectangle')">Rectangle</button>
+                    </div>
+                    <div class="tool-group">
+                        <label for="brushThickness">Thickness:</label>
+                        <input type="range" id="brushThickness" min="1" max="10" value="3" onchange="updateBrushThickness()">
+                        <span id="thicknessValue">3</span>px
+                    </div>
+                </div>
+                
+                <!-- Image Navigation Controls -->
+                <div id="imageNavigation" class="image-navigation" style="display: none;">
+                    <div class="nav-info">
+                        <span id="imageCounter">Image 1 of 1</span>
+                        <span id="imageName" style="margin-left: 15px; color: #666;"></span>
+                    </div>
+                    <div class="nav-controls">
+                        <button id="prevImageBtn" class="btn btn-secondary" onclick="previousImage()">&larr; Previous</button>
+                        <button id="nextImageBtn" class="btn btn-secondary" onclick="nextImage()">Next &rarr;</button>
+                        <button id="reorderImagesBtn" class="btn btn-secondary" onclick="showImageReorderModal()" style="margin-left: 10px;">Reorder Images</button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="imageCanvas" width="800" height="600"></canvas>
+                    <div id="canvasPlaceholder">
+                        Please click "Import Images" button to start
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="selection-info">
+                    <strong>Selected Annotation:</strong>
+                    <div id="selectedAnnotation" style="margin-top: 5px; color: #666;">
+                        No annotation selected
+                    </div>
+                </div>
+                
+                <div id="labelCategories">
+                    <!-- Dynamic label categories will be generated here -->
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-danger" onclick="removeLabel()">Remove Label</button>
+                    <button class="btn btn-primary" onclick="showStats()">Show Statistics</button>
+                    <button class="btn btn-secondary" onclick="exportPDF()">Export PDF</button>
+                </div>
+                
+                <div id="scoreSelector" class="score-selector">
+                    <h4>Rating (Optional)</h4>
+                    <div id="scoringTextPreview" class="scoring-text-preview"></div>
+                    <div style="display: flex; align-items: center;">
+                        <div id="scoreButtons" class="score-buttons">
+                            <!-- Dynamic score buttons will be generated here -->
+                        </div>
+                        <button class="skip-score-btn" onclick="skipScore()">Skip Rating</button>
+                    </div>
+                    
+                    <div class="comment-section" style="margin-top: 15px;">
+                        <h4>Comment (Optional)</h4>
+                        <textarea id="labelComment" placeholder="Add a comment for this label..." 
+                                rows="3" 
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="statsPanel" class="stats-panel" style="display: none;">
+            <h2>Label Statistics Results</h2>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Label Category</th>
+                        <th>Label Name</th>
+                        <th>Tag Count</th>
+                        <th>Average Score</th>
+                    </tr>
+                </thead>
+                <tbody id="statsTableBody">
+                </tbody>
+            </table>
+            
+            <div class="labeled-items-list">
+                <h3 style="margin-top: 30px;">Labeled Content</h3>
+                <div id="labeledItemsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Import Image Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>Import Images</h2>
+            <p style="margin: 10px 0;">Please select one or more image files to analyze:</p>
+            <input type="file" id="imageInput" accept="image/*" multiple style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px;">
+            
+            <div id="imagePreview" style="max-width: 100%; max-height: 300px; overflow: hidden; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; display: none;">
+                <img id="previewImg" style="max-width: 100%; height: auto;">
+            </div>
+            
+            <div class="button-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="importImage()">Import</button>
+                <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filename Input Modal -->
+    <div id="filenameModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeFilenameModal()">&times;</span>
+            <h2>Export PDF File</h2>
+            <p style="margin: 10px 0;">Please enter filename:</p>
+            <input type="text" id="filenameInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: 'Georgia', 'Times New Roman', serif;" placeholder="e.g.: My Qualitative Data Analysis">
+            <p style="margin: 10px 0; font-size: 12px; color: #666;">File will be saved as: <span id="filenamePreview">filename.pdf</span></p>
+            <div class="button-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="confirmExportPDF()">Confirm Export</button>
+                <button class="btn btn-secondary" onclick="closeFilenameModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Configuration Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="closeConfigModal()">&times;</span>
+            <h2>Configure Label Categories</h2>
+            <p style="margin: 10px 0 20px 0;">Set up your custom label categories, tags, and scoring ranges:</p>
+            
+            <div class="config-section">
+                <h3>Global Settings</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableScoring" checked>
+                    <label for="enableScoring">Enable scoring for labels</label>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>Label Categories</h3>
+                <div id="categoriesContainer">
+                    <!-- Dynamic categories will be generated here -->
+                </div>
+                <button class="add-btn" onclick="addCategory()">Add New Category</button>
+            </div>
+            
+            <div class="button-group" style="justify-content: flex-end; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="saveConfiguration()">Save Configuration</button>
+                <button class="btn btn-secondary" onclick="resetToDefault()">Reset to Default</button>
+                <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Image Reorder Modal -->
+    <div id="imageReorderModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeImageReorderModal()">&times;</span>
+            <h2>Reorder Images</h2>
+            <p style="margin: 10px 0 20px 0;">Drag and drop images to reorder them. Changes will apply immediately.</p>
+            
+            <div id="imageReorderList" class="image-reorder-list">
+                <!-- Dynamic image list will be generated here -->
+            </div>
+            
+            <div class="button-group" style="justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="closeImageReorderModal()">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let loadedImages = []; // Array of loaded images
+        let currentImageIndex = 0; // Current image being displayed
+        let imageAnnotations = {}; // Annotations for each image {imageIndex: [annotations]}
+        let currentAnnotation = null;
+        let annotationIdCounter = 0;
+        let pendingLabel = null; // Store pending label for scoring
+        let labelConfiguration = null; // Store current label configuration
+        
+        // Canvas and drawing variables
+        let canvas = null;
+        let ctx = null;
+        let isDrawing = false;
+        let currentTool = 'line';
+        let brushThickness = 3;
+        let startX = 0, startY = 0;
+        
+        // Default configuration
+        const defaultConfiguration = {
+            enableScoring: true,
+            categories: [
+                {
+                    id: 'example',
+                    name: 'You can add new categories and labels!',
+                    color: '#3498db',
+                    tags: [
+                        { name: 'You can score each annotation!', minScore: 1, maxScore: 10 }
+                    ]
+                },
+                {
+                    id: 'objects',
+                    name: 'Example: Objects',
+                    color: '#2ecc71',
+                    tags: [
+                        { name: 'Person', minScore: 1, maxScore: 5 },
+                        { name: 'Vehicle', minScore: 1, maxScore: 5 },
+                        { name: 'Building', minScore: 1, maxScore: 5 }
+                    ]
+                },
+                {
+                    id: 'features',
+                    name: 'Example: Visual Features',
+                    color: '#e74c3c',
+                    tags: [
+                        { name: 'Important detail', minScore: 1, maxScore: 3 },
+                        { name: 'Area of interest', minScore: 1, maxScore: 3 }
+                    ]
+                }
+            ]
+        };
+        
+        // Initialize configuration on page load
+        function initializeConfiguration() {
+            const savedConfig = localStorage.getItem('labelConfiguration');
+            if (savedConfig) {
+                try {
+                    labelConfiguration = JSON.parse(savedConfig);
+                } catch (e) {
+                    console.error('Failed to parse saved configuration:', e);
+                    labelConfiguration = JSON.parse(JSON.stringify(defaultConfiguration));
+                }
+            } else {
+                labelConfiguration = JSON.parse(JSON.stringify(defaultConfiguration));
+            }
+            generateLabelInterface();
+        }
+        
+        // Initialize canvas and event listeners
+        function initializeCanvas() {
+            canvas = document.getElementById('imageCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Add event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('click', selectAnnotation);
+            
+            // Initialize image input preview
+            const imageInput = document.getElementById('imageInput');
+            imageInput.addEventListener('change', previewImage);
+        }
+        
+        // Handle mouse movement for both drawing and hover effects
+        function handleMouseMove(e) {
+            if (isDrawing) {
+                // Continue with drawing logic
+                draw(e);
+            } else if (loadedImages.length > 0) {
+                // Handle hover effects for selection
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const hoveredAnnotation = findAnnotationAtPosition(x, y);
+                
+                if (hoveredAnnotation) {
+                    canvas.style.cursor = 'pointer';
+                } else {
+                    updateCanvasCursor();
+                }
+            }
+        }
+        
+        // Tool selection functions
+        function selectTool(tool) {
+            currentTool = tool;
+            
+            // Update tool button states
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tool + 'Tool').classList.add('active');
+            
+            // Update cursor
+            updateCanvasCursor();
+        }
+        
+        function updateBrushThickness() {
+            brushThickness = parseInt(document.getElementById('brushThickness').value);
+            document.getElementById('thicknessValue').textContent = brushThickness;
+        }
+        
+        function updateCanvasCursor() {
+            if (canvas) {
+                switch(currentTool) {
+                    case 'line':
+                        canvas.style.cursor = 'crosshair';
+                        break;
+                    case 'rectangle':
+                        canvas.style.cursor = 'cell';
+                        break;
+                    default:
+                        canvas.style.cursor = 'default';
+                }
+            }
+        }
+        
+        // Show import Modal
+        function showImportModal() {
+            // Reset modal to default state
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('importModal').style.display = 'block';
+        }
+        
+        // Preview image in modal
+        function previewImage() {
+            const input = document.getElementById('imageInput');
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (input.files && input.files.length > 0) {
+                // Show preview of first selected image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                    
+                    // Update preview text to show file count
+                    if (input.files.length > 1) {
+                        const existingText = preview.querySelector('.file-count');
+                        if (existingText) existingText.remove();
+                        
+                        const fileCountDiv = document.createElement('div');
+                        fileCountDiv.className = 'file-count';
+                        fileCountDiv.style.marginTop = '10px';
+                        fileCountDiv.style.textAlign = 'center';
+                        fileCountDiv.style.color = '#666';
+                        fileCountDiv.style.fontSize = '12px';
+                        fileCountDiv.textContent = `${input.files.length} images selected (showing first one)`;
+                        preview.appendChild(fileCountDiv);
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        // Import images to system
+        function importImage() {
+            const input = document.getElementById('imageInput');
+            if (input.files && input.files.length > 0) {
+                // Clear existing data
+                loadedImages = [];
+                imageAnnotations = {};
+                annotationIdCounter = 0;
+                currentImageIndex = 0;
+                currentAnnotation = null;
+                
+                let loadedCount = 0;
+                const totalFiles = input.files.length;
+                
+                // Load all selected images
+                Array.from(input.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            loadedImages[index] = {
+                                image: img,
+                                name: file.name,
+                                src: e.target.result
+                            };
+                            
+                            // Initialize empty annotations for this image
+                            imageAnnotations[index] = [];
+                            
+                            loadedCount++;
+                            
+                            // When all images are loaded, display the first one
+                            if (loadedCount === totalFiles) {
+                                displayCurrentImage();
+                                updateNavigationControls();
+                                closeImportModal();
+                            }
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+        
+        // Display current image and its annotations
+        function displayCurrentImage() {
+            if (loadedImages.length === 0) return;
+            
+            const currentImageData = loadedImages[currentImageIndex];
+            const currentImage = currentImageData.image;
+            
+            // Resize canvas to fit current image
+            canvas.width = currentImage.width;
+            canvas.height = currentImage.height;
+            
+            // Draw current image on canvas
+            ctx.drawImage(currentImage, 0, 0);
+            
+            // Show canvas, hide placeholder
+            document.querySelector('.canvas-container').classList.add('has-image');
+            
+            // Load annotations for current image
+            const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+            
+            // Clear current selection
+            currentAnnotation = null;
+            
+            // Redraw with current image's annotations
+            redrawCanvas();
+            updateAnnotationDisplay();
+        }
+        
+        // Navigation functions
+        function nextImage() {
+            if (currentImageIndex < loadedImages.length - 1) {
+                saveCurrentImageState();
+                currentImageIndex++;
+                displayCurrentImage();
+                updateNavigationControls();
+            }
+        }
+        
+        function previousImage() {
+            if (currentImageIndex > 0) {
+                saveCurrentImageState();
+                currentImageIndex--;
+                displayCurrentImage();
+                updateNavigationControls();
+            }
+        }
+        
+        // Save current image annotations before switching
+        function saveCurrentImageState() {
+            // Current annotations are already stored in imageAnnotations[currentImageIndex]
+            // since we work directly on that array
+        }
+        
+        // Update navigation controls
+        function updateNavigationControls() {
+            const navigation = document.getElementById('imageNavigation');
+            const counter = document.getElementById('imageCounter');
+            const imageName = document.getElementById('imageName');
+            const prevBtn = document.getElementById('prevImageBtn');
+            const nextBtn = document.getElementById('nextImageBtn');
+            
+            if (loadedImages.length > 0) {
+                navigation.style.display = 'flex';
+                counter.textContent = `Image ${currentImageIndex + 1} of ${loadedImages.length}`;
+                imageName.textContent = loadedImages[currentImageIndex].name;
+                
+                // Enable/disable navigation buttons
+                prevBtn.disabled = currentImageIndex === 0;
+                nextBtn.disabled = currentImageIndex === loadedImages.length - 1;
+                
+                if (loadedImages.length === 1) {
+                    // Hide navigation if only one image
+                    navigation.style.display = 'none';
+                }
+            } else {
+                navigation.style.display = 'none';
+            }
+        }
+        
+        // Show configuration Modal
+        function showConfigModal() {
+            populateConfigModal();
+            document.getElementById('configModal').style.display = 'block';
+        }
+        
+        // Close configuration Modal
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+        
+        // Close import Modal
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+        
+        // Drawing functions
+        function startDrawing(e) {
+            if (loadedImages.length === 0) return;
+            
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+        }
+        
+        function draw(e) {
+            if (!isDrawing || loadedImages.length === 0) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            // For line and rectangle tools, show preview
+            if (currentTool === 'line' || currentTool === 'rectangle') {
+                redrawCanvas();
+                drawTemporaryShape(startX, startY, currentX, currentY);
+            }
+        }
+        
+        function stopDrawing(e) {
+            if (!isDrawing || loadedImages.length === 0) return;
+            
+            isDrawing = false;
+            const rect = canvas.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            // Create annotation object
+            const annotation = {
+                id: ++annotationIdCounter,
+                type: currentTool,
+                startX: startX,
+                startY: startY,
+                endX: endX,
+                endY: endY,
+                thickness: brushThickness,
+                labels: [],
+                color: '#ff0000', // Default color, will be updated when labeled
+                selected: false
+            };
+            
+            // Add annotation to current image
+            if (!imageAnnotations[currentImageIndex]) {
+                imageAnnotations[currentImageIndex] = [];
+            }
+            imageAnnotations[currentImageIndex].push(annotation);
+            
+            redrawCanvas();
+            
+            // Select this annotation for labeling
+            selectAnnotationById(annotation.id);
+        }
+        
+        function drawTemporaryShape(x1, y1, x2, y2) {
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = brushThickness;
+            ctx.setLineDash([5, 5]); // Dashed line for preview
+            
+            ctx.beginPath();
+            switch(currentTool) {
+                case 'line':
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    break;
+                case 'rectangle':
+                    ctx.rect(x1, y1, x2 - x1, y2 - y1);
+                    break;
+            }
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset to solid line
+        }
+        
+        function redrawCanvas() {
+            if (loadedImages.length === 0) return;
+            
+            const currentImage = loadedImages[currentImageIndex].image;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Redraw current image
+            ctx.drawImage(currentImage, 0, 0);
+            
+            // Redraw annotations for current image
+            const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+            currentAnnotations.forEach(annotation => {
+                drawAnnotation(annotation);
+            });
+        }
+        
+        function drawAnnotation(annotation) {
+            // Set stroke color - bright green if selected, otherwise label color
+            ctx.strokeStyle = annotation.selected ? '#00ff00' : annotation.color;
+            ctx.lineWidth = annotation.thickness;
+            ctx.setLineDash([]);
+            
+            // Add glow effect for selected annotations
+            if (annotation.selected) {
+                ctx.shadowColor = '#00ff00';
+                ctx.shadowBlur = 3;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.beginPath();
+            switch(annotation.type) {
+                case 'line':
+                    ctx.moveTo(annotation.startX, annotation.startY);
+                    ctx.lineTo(annotation.endX, annotation.endY);
+                    break;
+                case 'rectangle':
+                    ctx.rect(annotation.startX, annotation.startY, 
+                            annotation.endX - annotation.startX, 
+                            annotation.endY - annotation.startY);
+                    break;
+            }
+            ctx.stroke();
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+            
+            // Draw index number for labeled annotations
+            if (annotation.labels && annotation.labels.length > 0) {
+                ctx.fillStyle = annotation.selected ? '#00ff00' : annotation.color;
+                ctx.font = 'bold 42px Arial';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 6;
+                
+                const label = `#${annotation.id}`;
+                const x = annotation.startX + 5;
+                const y = annotation.startY - 5;
+                
+                // Draw white outline for better visibility
+                ctx.strokeText(label, x, y);
+                ctx.fillText(label, x, y);
+            }
+        }
+        
+        // Annotation selection and management
+        function selectAnnotation(e) {
+            // Don't select during drawing
+            if (isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Find annotation at click position
+            const clickedAnnotation = findAnnotationAtPosition(x, y);
+            
+            if (clickedAnnotation) {
+                // Deselect all annotations for current image
+                const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+                currentAnnotations.forEach(ann => ann.selected = false);
+                
+                // Select clicked annotation
+                clickedAnnotation.selected = true;
+                currentAnnotation = clickedAnnotation;
+                
+                redrawCanvas();
+                updateAnnotationDisplay();
+                
+                // Provide visual feedback
+                console.log(`Selected annotation #${clickedAnnotation.id} (${clickedAnnotation.type})`);
+            } else {
+                // Clicked on empty area - deselect all
+                if (currentAnnotation) {
+                    const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+                    currentAnnotations.forEach(ann => ann.selected = false);
+                    currentAnnotation = null;
+                    redrawCanvas();
+                    updateAnnotationDisplay();
+                }
+            }
+        }
+        
+        function selectAnnotationById(id) {
+            const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+            currentAnnotations.forEach(ann => ann.selected = false);
+            const annotation = currentAnnotations.find(ann => ann.id === id);
+            if (annotation) {
+                annotation.selected = true;
+                currentAnnotation = annotation;
+                redrawCanvas();
+                updateAnnotationDisplay();
+            }
+        }
+        
+        function findAnnotationAtPosition(x, y) {
+            // Increase tolerance for better click detection
+            const tolerance = 15;
+            
+            // Get current image annotations
+            const currentAnnotations = imageAnnotations[currentImageIndex] || [];
+            
+            // Check annotations in reverse order (most recent first)
+            for (let i = currentAnnotations.length - 1; i >= 0; i--) {
+                const ann = currentAnnotations[i];
+                
+                // Add extra tolerance for thicker lines
+                const adjustedTolerance = Math.max(tolerance, ann.thickness + 5);
+                
+                switch(ann.type) {
+                    case 'line':
+                        if (isPointOnLine(x, y, ann.startX, ann.startY, ann.endX, ann.endY, adjustedTolerance)) {
+                            return ann;
+                        }
+                        break;
+                    case 'rectangle':
+                        if (isPointInRectangle(x, y, ann.startX, ann.startY, ann.endX, ann.endY, adjustedTolerance)) {
+                            return ann;
+                        }
+                        break;
+                }
+            }
+            return null;
+        }
+        
+        function isPointOnLine(px, py, x1, y1, x2, y2, tolerance) {
+            const A = px - x1;
+            const B = py - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            const param = lenSq !== 0 ? dot / lenSq : -1;
+            
+            let xx, yy;
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+            
+            const dx = px - xx;
+            const dy = py - yy;
+            return Math.sqrt(dx * dx + dy * dy) <= tolerance;
+        }
+        
+        function isPointInRectangle(px, py, x1, y1, x2, y2, tolerance) {
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+            
+            // Check if point is inside the rectangle (including border)
+            if (px >= minX && px <= maxX && py >= minY && py <= maxY) {
+                return true;
+            }
+            
+            // Check if point is near the rectangle border
+            const nearLeft = Math.abs(px - minX) <= tolerance && py >= minY - tolerance && py <= maxY + tolerance;
+            const nearRight = Math.abs(px - maxX) <= tolerance && py >= minY - tolerance && py <= maxY + tolerance;
+            const nearTop = Math.abs(py - minY) <= tolerance && px >= minX - tolerance && px <= maxX + tolerance;
+            const nearBottom = Math.abs(py - maxY) <= tolerance && px >= minX - tolerance && px <= maxX + tolerance;
+            
+            return nearLeft || nearRight || nearTop || nearBottom;
+        }
+        
+        
+        function updateAnnotationDisplay() {
+            const selectedAnnotationDiv = document.getElementById('selectedAnnotation');
+            
+            if (currentAnnotation) {
+                let description = `Annotation #${currentAnnotation.id} (${currentAnnotation.type})`;
+                if (currentAnnotation.labels.length > 0) {
+                    description += ` - Labels: ${currentAnnotation.labels.map(l => l.name).join(', ')}`;
+                }
+                selectedAnnotationDiv.textContent = description;
+            } else {
+                selectedAnnotationDiv.textContent = 'No annotation selected';
+            }
+        }
+        
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all annotations from all images?')) {
+                imageAnnotations = {};
+                annotationIdCounter = 0;
+                currentAnnotation = null;
+                pendingLabel = null;
+                document.getElementById('scoreSelector').classList.remove('active');
+                document.getElementById('statsPanel').style.display = 'none';
+                
+                if (loadedImages.length > 0) {
+                    redrawCanvas();
+                } else {
+                    // Clear canvas and show placeholder
+                    const canvasContainer = document.querySelector('.canvas-container');
+                    canvasContainer.classList.remove('has-image');
+                    if (canvas) {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+                updateAnnotationDisplay();
+                displayLabeledItems();
+            }
+        }
+        
+        // Text cleaning and normalization functions (keeping for compatibility)
+        function cleanImportedText(rawText) {
+            if (!rawText) return '';
+            
+            let cleanedText = rawText;
+            
+            // Step 1: Remove HTML tags while preserving text content
+            cleanedText = stripHtmlTags(cleanedText);
+            
+            // Step 2: Remove citation markers and references
+            cleanedText = removeCitationMarkers(cleanedText);
+            
+            // Step 3: Remove rich text formatting artifacts
+            cleanedText = removeRichTextArtifacts(cleanedText);
+            
+            // Step 4: Normalize whitespace and line endings
+            cleanedText = normalizeWhitespace(cleanedText);
+            
+            // Step 5: Remove problematic characters
+            cleanedText = sanitizeText(cleanedText);
+            
+            return cleanedText.trim();
+        }
+        
+        // Remove HTML tags while preserving text content
+        function stripHtmlTags(text) {
+            // Create a temporary DOM element to safely parse and extract text
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = text;
+            
+            // Extract text content, which automatically removes all HTML tags
+            let cleanText = tempDiv.textContent || tempDiv.innerText || '';
+            
+            // Additional cleanup for common HTML entities
+            cleanText = cleanText
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            
+            return cleanText;
+        }
+        
+        // Remove citation markers and academic references
+        function removeCitationMarkers(text) {
+            return text
+                // Remove common citation patterns:
+                // [number] - e.g., [1], [23], [456]
+                .replace(/\[\d+\]/g, '')
+                // [letter] - e.g., [a], [b], [c]
+                .replace(/\[[a-zA-Z]\]/g, '')
+                // [letter][number] - e.g., [d][32], [a][15]
+                .replace(/\[[a-zA-Z]\]\[\d+\]/g, '')
+                // Multiple adjacent citations - e.g., [1][2][3] or [a][b][c]
+                .replace(/(\[[a-zA-Z0-9]\]){2,}/g, '')
+                // Citations with ranges - e.g., [1-3], [a-c]
+                .replace(/\[[a-zA-Z0-9]-[a-zA-Z0-9]\]/g, '')
+                // Citations with commas - e.g., [1,2,3], [a,b,c]
+                .replace(/\[[a-zA-Z0-9,\s]+\]/g, '')
+                // Parenthetical citations - e.g., (Smith 2020), (Jones et al. 2019)
+                .replace(/\([A-Za-z][^)]*\d{4}[^)]*\)/g, '')
+                // Clean up any double spaces that might result from removals
+                .replace(/\s{2,}/g, ' ');
+        }
+        
+        // Remove rich text formatting artifacts and invisible characters
+        function removeRichTextArtifacts(text) {
+            return text
+                // Remove zero-width characters
+                .replace(/[\u200B-\u200D\uFEFF]/g, '')
+                // Remove control characters except line breaks and tabs
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+                // Remove soft hyphens
+                .replace(/\u00AD/g, '')
+                // Remove direction marks
+                .replace(/[\u202A-\u202E]/g, '')
+                // Remove various space characters, keep only normal space
+                .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ');
+        }
+        
+        // Normalize whitespace and line endings
+        function normalizeWhitespace(text) {
+            return text
+                // Normalize line endings to \n
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n')
+                // Add line breaks before speaker patterns (e.g., 陳：, 郭：, A:, Speaker1:)
+                .replace(/([^\n])\s*([A-Za-z\u4e00-\u9fff]+\s*[:：])/g, '$1\n$2')
+                // Replace multiple consecutive spaces with single space
+                .replace(/ {2,}/g, ' ')
+                // Replace multiple consecutive line breaks with double line break (paragraph separation)
+                .replace(/\n{3,}/g, '\n\n')
+                // Trim spaces at the beginning and end of each line
+                .split('\n')
+                .map(line => line.trim())
+                .join('\n');
+        }
+        
+        // Remove or replace problematic characters
+        function sanitizeText(text) {
+            return text
+                // Remove or replace problematic Unicode characters that might interfere with selection
+                .replace(/[\uE000-\uF8FF]/g, '') // Private use area
+                .replace(/[\uFFF0-\uFFFF]/g, '') // Specials block
+                // Normalize common quote characters
+                .replace(/[""]/g, '"')
+                .replace(/['']/g, "'")
+                // Normalize dashes
+                .replace(/[–—]/g, '-');
+        }
+        
+        // Check if text was significantly modified during cleaning
+        function wasTextSignificantlyModified(original, cleaned) {
+            const originalLength = original.length;
+            const cleanedLength = cleaned.length;
+            const lengthDifference = Math.abs(originalLength - cleanedLength);
+            
+            // Consider it significant if more than 5% of characters were removed/changed
+            // or if specific formatting elements were detected
+            const significantLengthChange = lengthDifference > originalLength * 0.05;
+            const hadHtmlTags = /<[^>]*>/g.test(original);
+            const hadRichTextArtifacts = /[\u200B-\u200D\uFEFF]/.test(original);
+            const hadCitationMarkers = /\[[a-zA-Z0-9,\s\-]+\]/.test(original) || /\([A-Za-z][^)]*\d{4}[^)]*\)/.test(original);
+            
+            return significantLengthChange || hadHtmlTags || hadRichTextArtifacts || hadCitationMarkers;
+        }
+        
+        // Import text with optional auto-formatting
+        function importText() {
+            const rawText = document.getElementById('textInput').value;
+            if (!rawText.trim()) {
+                alert('Please enter text content');
+                return;
+            }
+            
+            const autoFormatEnabled = document.getElementById('enableAutoFormat').checked;
+            let finalText;
+            
+            if (autoFormatEnabled) {
+                // Clean and normalize the text
+                const cleanedText = cleanImportedText(rawText);
+                
+                if (!cleanedText.trim()) {
+                    alert('The imported text appears to be empty after processing. Please check your content.');
+                    return;
+                }
+                
+                // Check if significant modifications were made
+                if (wasTextSignificantlyModified(rawText, cleanedText)) {
+                    const hasHtmlTags = /<[^>]*>/g.test(rawText);
+                    const hasRichTextArtifacts = /[\u200B-\u200D\uFEFF]/.test(rawText);
+                    const hasCitationMarkers = /\[[a-zA-Z0-9,\s\-]+\]/.test(rawText) || /\([A-Za-z][^)]*\d{4}[^)]*\)/.test(rawText);
+                    
+                    let cleaningDetails = 'The following formatting has been automatically cleaned:\n';
+                    if (hasHtmlTags) cleaningDetails += '• HTML tags removed\n';
+                    if (hasRichTextArtifacts) cleaningDetails += '• Rich text artifacts removed\n';
+                    if (hasCitationMarkers) cleaningDetails += '• Citation markers removed (e.g., [1], [d][32])\n';
+                    
+                    const shouldProceed = confirm(
+                        cleaningDetails + '\n' +
+                        `Original length: ${rawText.length} characters\n` +
+                        `Cleaned length: ${cleanedText.length} characters\n\n` +
+                        'Would you like to proceed with the cleaned text?'
+                    );
+                    
+                    if (!shouldProceed) {
+                        // User chose not to proceed, keep original
+                        finalText = rawText.trim();
+                    } else {
+                        finalText = cleanedText;
+                    }
+                } else {
+                    // Minor changes only, proceed automatically
+                    finalText = cleanedText;
+                }
+            } else {
+                // Auto-formatting disabled, use raw text
+                finalText = rawText.trim();
+                
+                // Check if the text contains potential formatting issues and warn user
+                const hasHtmlTags = /<[^>]*>/g.test(rawText);
+                const hasRichTextArtifacts = /[\u200B-\u200D\uFEFF]/.test(rawText);
+                const hasCitationMarkers = /\[[a-zA-Z0-9,\s\-]+\]/.test(rawText) || /\([A-Za-z][^)]*\d{4}[^)]*\)/.test(rawText);
+                
+                if (hasHtmlTags || hasRichTextArtifacts || hasCitationMarkers) {
+                    const shouldContinue = confirm(
+                        'Warning: The text appears to contain formatting that may interfere with labeling:\n' +
+                        (hasHtmlTags ? '• HTML tags\n' : '') +
+                        (hasRichTextArtifacts ? '• Rich text artifacts\n' : '') +
+                        (hasCitationMarkers ? '• Citation markers (e.g., [1], [d][32])\n' : '') +
+                        '\nConsider enabling auto-formatting for better results.\n\n' +
+                        'Continue with the original text anyway?'
+                    );
+                    
+                    if (!shouldContinue) {
+                        return; // User chose to go back and enable auto-formatting
+                    }
+                }
+            }
+            
+            // Store and display the final text
+            originalText = finalText;
+            document.getElementById('textContent').textContent = originalText;
+            labeledSegments = [];
+            segmentIdCounter = 0;
+            
+            // Setup text selection listener
+            setupTextSelection();
+            
+            closeImportModal();
+        }
+        
+        // Setup text selection listener
+        function setupTextSelection() {
+            const textContent = document.getElementById('textContent');
+            
+            textContent.addEventListener('mouseup', function() {
+                const selection = window.getSelection();
+                
+                if (selection.toString().trim()) {
+                    // Use the new mapping function to convert DOM selection to original text positions
+                    const mappedSelection = mapSelectionToOriginalText(selection);
+                    
+                    if (mappedSelection) {
+                        currentSelection = mappedSelection;
+                        
+                        // Display the cleaned text (without indices) in the selection panel
+                        const displayText = cleanSelectedText(mappedSelection.text) || mappedSelection.text;
+                        document.getElementById('selectedText').textContent = 
+                            displayText.length > 50 ? displayText.substring(0, 50) + '...' : displayText;
+                        
+                        console.info('Selection mapped successfully:', {
+                            rawText: selection.toString().trim(),
+                            cleanedText: mappedSelection.text,
+                            start: mappedSelection.start,
+                            end: mappedSelection.end
+                        });
+                    } else {
+                        currentSelection = null;
+                        document.getElementById('selectedText').textContent = 'Selection mapping failed';
+                        console.warn('Failed to map selection to original text');
+                    }
+                } else {
+                    currentSelection = null;
+                    document.getElementById('selectedText').textContent = 'No text selected';
+                }
+            });
+        }
+        
+        // Calculate text offset based on the original text content
+        function getTextOffset(root, node, offset) {
+            // Create a mapping from the current DOM back to original text positions
+            let textOffset = 0;
+            let walker = document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let currentNode;
+            while (currentNode = walker.nextNode()) {
+                if (currentNode === node) {
+                    return textOffset + offset;
+                }
+                
+                // Skip text content inside label indices (sup elements)
+                if (currentNode.parentElement && currentNode.parentElement.tagName === 'SUP') {
+                    continue;
+                }
+                
+                textOffset += currentNode.textContent.length;
+            }
+            return textOffset;
+        }
+        
+        // Clean selected text by removing numeric indices
+        function cleanSelectedText(rawText) {
+            if (!rawText) return '';
+            
+            // Remove patterns like [1], [2], [123], etc. from anywhere in the text
+            let cleaned = rawText.replace(/\[\d+\]/g, '');
+            
+            // Remove any extra whitespace that might be left after removing indices
+            cleaned = cleaned.replace(/\s+/g, ' ').trim();
+            
+            // If the text starts or ends with whitespace after cleaning, trim it
+            return cleaned;
+        }
+        
+        // Convert DOM selection to original text positions
+        function mapSelectionToOriginalText(selection) {
+            if (!selection || selection.rangeCount === 0) return null;
+            
+            const rawSelectedText = selection.toString();
+            if (!rawSelectedText) return null;
+            
+            // Clean the selected text to remove any numeric indices but preserve whitespace structure
+            const selectedText = cleanSelectedText(rawSelectedText);
+            if (!selectedText) return null;
+            
+            const range = selection.getRangeAt(0);
+            const textContent = document.getElementById('textContent');
+            
+            // Strategy 1: Use improved position mapping for multi-line selections
+            try {
+                const result = mapSelectionUsingRangePositions(range, textContent, selectedText);
+                if (result && validateSelectionMapping(result)) {
+                    return result;
+                }
+            } catch (e) {
+                console.warn('Range position mapping failed:', e);
+            }
+            
+            // Strategy 2: Enhanced text search with context
+            try {
+                const result = mapSelectionUsingContextualSearch(selectedText, range, textContent);
+                if (result && validateSelectionMapping(result)) {
+                    return result;
+                }
+            } catch (e) {
+                console.warn('Contextual search failed:', e);
+            }
+            
+            // Strategy 3: Fuzzy matching for selections with formatting differences
+            try {
+                const result = mapSelectionUsingFuzzyMatch(selectedText);
+                if (result && validateSelectionMapping(result)) {
+                    return result;
+                }
+            } catch (e) {
+                console.warn('Fuzzy matching failed:', e);
+            }
+            
+            console.warn('All selection mapping strategies failed for text:', selectedText.substring(0, 100));
+            return null;
+        }
+        
+        // Strategy 1: Improved range-based position mapping
+        function mapSelectionUsingRangePositions(range, textContent, selectedText) {
+            // Get all text nodes and build a comprehensive character map
+            const textNodes = [];
+            const walker = document.createTreeWalker(
+                textContent,
+                NodeFilter.SHOW_TEXT,
+                (node) => {
+                    // Skip text inside sup elements (label indices)
+                    if (node.parentElement && node.parentElement.tagName === 'SUP') {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                },
+                false
+            );
+            
+            let node;
+            let totalOffset = 0;
+            let startOffset = -1;
+            let endOffset = -1;
+            
+            while (node = walker.nextNode()) {
+                textNodes.push({
+                    node: node,
+                    startOffset: totalOffset,
+                    endOffset: totalOffset + node.textContent.length,
+                    text: node.textContent
+                });
+                
+                // Check if this is our start container
+                if (node === range.startContainer) {
+                    startOffset = totalOffset + range.startOffset;
+                }
+                
+                // Check if this is our end container
+                if (node === range.endContainer) {
+                    endOffset = totalOffset + range.endOffset;
+                }
+                
+                totalOffset += node.textContent.length;
+            }
+            
+            // If we found both start and end positions
+            if (startOffset !== -1 && endOffset !== -1 && endOffset > startOffset) {
+                // Extract the actual visible text
+                const visibleText = textNodes.map(tn => tn.text).join('');
+                const extractedText = visibleText.substring(startOffset, endOffset);
+                const cleanedExtracted = cleanSelectedText(extractedText);
+                
+                // Find this text in the original text
+                return findTextInOriginal(cleanedExtracted || selectedText);
+            }
+            
+            return null;
+        }
+        
+        // Strategy 2: Contextual search using surrounding text
+        function mapSelectionUsingContextualSearch(selectedText, range, textContent) {
+            // Get some context before and after the selection
+            const beforeRange = document.createRange();
+            const afterRange = document.createRange();
+            
+            try {
+                // Get text before selection (up to 50 characters)
+                beforeRange.setStart(textContent.firstChild || textContent, 0);
+                beforeRange.setEnd(range.startContainer, range.startOffset);
+                const beforeText = cleanSelectedText(beforeRange.toString()).slice(-50);
+                
+                // Get text after selection (up to 50 characters)
+                afterRange.setStart(range.endContainer, range.endOffset);
+                afterRange.setEnd(textContent.lastChild || textContent, (textContent.lastChild || textContent).length || 0);
+                const afterText = cleanSelectedText(afterRange.toString()).slice(0, 50);
+                
+                // Search for the pattern: beforeText + selectedText + afterText
+                const contextPattern = beforeText + selectedText + afterText;
+                const cleanedOriginal = originalText.replace(/\s+/g, ' ');
+                const cleanedPattern = contextPattern.replace(/\s+/g, ' ');
+                
+                const contextIndex = cleanedOriginal.indexOf(cleanedPattern);
+                if (contextIndex !== -1) {
+                    const textStart = contextIndex + beforeText.length;
+                    return {
+                        text: selectedText,
+                        start: findActualPosition(textStart, cleanedOriginal, originalText),
+                        end: findActualPosition(textStart + selectedText.length, cleanedOriginal, originalText)
+                    };
+                }
+            } catch (e) {
+                console.warn('Context search error:', e);
+            }
+            
+            return null;
+        }
+        
+        // Strategy 3: Fuzzy matching for complex cases
+        function mapSelectionUsingFuzzyMatch(selectedText) {
+            // Normalize both texts for comparison
+            const normalizeText = (text) => text.replace(/\s+/g, ' ').trim().toLowerCase();
+            const normalizedSelected = normalizeText(selectedText);
+            const normalizedOriginal = normalizeText(originalText);
+            
+            // Direct match
+            let index = normalizedOriginal.indexOf(normalizedSelected);
+            if (index !== -1) {
+                return {
+                    text: selectedText,
+                    start: findActualPosition(index, normalizedOriginal, originalText),
+                    end: findActualPosition(index + normalizedSelected.length, normalizedOriginal, originalText)
+                };
+            }
+            
+            // Try with different whitespace handling
+            const compactSelected = selectedText.replace(/\s+/g, '');
+            const compactOriginal = originalText.replace(/\s+/g, '');
+            index = compactOriginal.indexOf(compactSelected);
+            
+            if (index !== -1) {
+                // Need to map back to original positions - this is complex, so use simpler approach
+                return findTextInOriginal(selectedText);
+            }
+            
+            return null;
+        }
+        
+        // Helper function to find text in original with multiple strategies
+        function findTextInOriginal(selectedText) {
+            // Strategy 1: Direct match
+            let index = originalText.indexOf(selectedText);
+            if (index !== -1) {
+                return {
+                    text: selectedText,
+                    start: index,
+                    end: index + selectedText.length
+                };
+            }
+            
+            // Strategy 2: Normalize whitespace and try again
+            const normalizedText = selectedText.replace(/\s+/g, ' ').trim();
+            const normalizedOriginal = originalText.replace(/\s+/g, ' ');
+            index = normalizedOriginal.indexOf(normalizedText);
+            
+            if (index !== -1) {
+                return {
+                    text: normalizedText,
+                    start: findActualPosition(index, normalizedOriginal, originalText),
+                    end: findActualPosition(index + normalizedText.length, normalizedOriginal, originalText)
+                };
+            }
+            
+            // Strategy 3: Check within existing segments
+            const sortedSegments = [...labeledSegments].sort((a, b) => a.start - b.start);
+            for (const segment of sortedSegments) {
+                const segmentText = originalText.substring(segment.start, segment.end);
+                const textIndex = segmentText.indexOf(selectedText);
+                if (textIndex !== -1) {
+                    return {
+                        text: selectedText,
+                        start: segment.start + textIndex,
+                        end: segment.start + textIndex + selectedText.length
+                    };
+                }
+            }
+            
+            return null;
+        }
+        
+        // Helper to find actual position in original text from normalized position
+        function findActualPosition(normalizedPos, normalizedText, originalText) {
+            let originalPos = 0;
+            let normalizedCount = 0;
+            
+            for (let i = 0; i < originalText.length && normalizedCount < normalizedPos; i++) {
+                if (normalizedText[normalizedCount] === originalText[i] || 
+                    (normalizedText[normalizedCount] === ' ' && /\s/.test(originalText[i]))) {
+                    normalizedCount++;
+                }
+                originalPos++;
+            }
+            
+            return Math.min(originalPos, originalText.length);
+        }
+        
+        // Enhanced validation for selection mapping
+        function validateSelectionMapping(result) {
+            if (!result || !originalText) return false;
+            
+            // Check bounds
+            if (result.start < 0 || result.end > originalText.length || result.start >= result.end) {
+                return false;
+            }
+            
+            // Check if the text roughly matches (allowing for whitespace differences)
+            const expectedText = originalText.substring(result.start, result.end);
+            const normalizedExpected = expectedText.replace(/\s+/g, ' ').trim().toLowerCase();
+            const normalizedActual = result.text.replace(/\s+/g, ' ').trim().toLowerCase();
+            
+            // Allow for minor differences in whitespace
+            return normalizedExpected === normalizedActual || 
+                   normalizedExpected.includes(normalizedActual) ||
+                   normalizedActual.includes(normalizedExpected);
+        }
+        
+        // Validate selection (using the enhanced validation)
+        function validateSelection(selection) {
+            return validateSelectionMapping(selection);
+        }
+        
+        // Generate dynamic label interface
+        function generateLabelInterface() {
+            const container = document.getElementById('labelCategories');
+            container.innerHTML = '';
+            
+            labelConfiguration.categories.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'label-category';
+                
+                const titleH3 = document.createElement('h3');
+                titleH3.textContent = category.name;
+                categoryDiv.appendChild(titleH3);
+                
+                const tagsDiv = document.createElement('div');
+                tagsDiv.className = 'label-tags';
+                
+                category.tags.forEach(tag => {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = `label-tag ${category.id}`;
+                    tagSpan.textContent = tag.name;
+                    tagSpan.onclick = () => applyLabel(category.name, tag.name, tag);
+                    
+                    // Set dynamic styles
+                    tagSpan.style.borderColor = category.color;
+                    
+                    tagsDiv.appendChild(tagSpan);
+                });
+                
+                categoryDiv.appendChild(tagsDiv);
+                container.appendChild(categoryDiv);
+            });
+            
+            // Update CSS for active states
+            updateDynamicCSS();
+        }
+        
+        // Update dynamic CSS for categories
+        function updateDynamicCSS() {
+            let styleElement = document.getElementById('dynamicStyles');
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'dynamicStyles';
+                document.head.appendChild(styleElement);
+            }
+            
+            let css = '';
+            labelConfiguration.categories.forEach(category => {
+                css += `
+                    .label-tag.${category.id}.active {
+                        background-color: ${category.color} !important;
+                    }
+                    .label-badge.${category.id} {
+                        background-color: ${category.color} !important;
+                    }
+                `;
+            });
+            
+            styleElement.textContent = css;
+        }
+        
+        // Apply label with tag configuration
+        function applyLabel(category, label, tagConfig) {
+            if (!currentAnnotation) {
+                alert('Please select an annotation to label first');
+                return;
+            }
+            
+            // Store pending label info
+            pendingLabel = {
+                category: category,
+                label: label,
+                tagConfig: tagConfig,
+                annotation: currentAnnotation
+            };
+            
+            if (labelConfiguration.enableScoring && tagConfig) {
+                // Show score selector
+                document.getElementById('scoreSelector').classList.add('active');
+                
+                // Generate dynamic score buttons
+                generateScoreButtons(tagConfig.minScore, tagConfig.maxScore);
+                
+                // Show annotation preview being scored
+                const annotationType = currentAnnotation.type;
+                const annotationId = currentAnnotation.id;
+                document.getElementById('scoringTextPreview').innerHTML = 
+                    `<strong>Labeling as "${label}":</strong><br>Annotation #${annotationId} (${annotationType})`;
+                
+                // Highlight the selected annotation temporarily
+                currentAnnotation.selected = true;
+                redrawCanvas();
+            } else {
+                // Skip scoring and apply label directly
+                addLabelWithScore(null);
+            }
+        }
+        
+        // Generate dynamic score buttons
+        function generateScoreButtons(minScore, maxScore) {
+            const container = document.getElementById('scoreButtons');
+            container.innerHTML = '';
+            
+            for (let i = minScore; i <= maxScore; i++) {
+                const button = document.createElement('button');
+                button.className = 'score-btn';
+                button.textContent = i;
+                button.onclick = () => setScore(i);
+                container.appendChild(button);
+            }
+        }
+        
+        // Add temporary highlight
+        function addTempHighlight(start, end) {
+            const textContent = document.getElementById('textContent');
+            
+            // Sort existing segments by start position for consistent indexing
+            const sortedSegments = [...labeledSegments].sort((a, b) => a.start - b.start);
+            
+            // Calculate what the next index would be
+            const nextIndex = sortedSegments.length + 1;
+            
+            let html = '';
+            let lastPos = 0;
+            
+            // Process existing labeled segments
+            sortedSegments.forEach((segment, index) => {
+                // Add unlabeled text before this segment
+                if (lastPos < segment.start) {
+                    const unlabeledText = originalText.substring(lastPos, segment.start);
+                    
+                    // Check if temp highlight overlaps with this unlabeled section
+                    if (start >= lastPos && start < segment.start) {
+                        const beforeTemp = originalText.substring(lastPos, Math.max(lastPos, start));
+                        const tempSection = originalText.substring(start, Math.min(end, segment.start));
+                        const afterTemp = originalText.substring(Math.min(end, segment.start), segment.start);
+                        
+                        html += escapeHtml(beforeTemp);
+                        if (tempSection) {
+                            // Get color from pending label if available
+                            let tempIndexColor = '#f39c12'; // Default orange
+                            if (pendingLabel && pendingLabel.category) {
+                                const category = labelConfiguration.categories.find(cat => cat.name === pendingLabel.category);
+                                if (category) {
+                                    tempIndexColor = category.color;
+                                }
+                            }
+                            html += `<span class="temp-highlight" style="color: ${tempIndexColor};"><sup class="label-index temp-index" style="color: ${tempIndexColor};">[${nextIndex}]</sup>${escapeHtml(tempSection)}</span>`;
+                        }
+                        html += escapeHtml(afterTemp);
+                    } else {
+                        html += escapeHtml(unlabeledText);
+                    }
+                }
+                
+                // Add existing labeled segment
+                const allLabels = [];
+                Object.entries(segment.labels).forEach(([category, labels]) => {
+                    labels.forEach(labelItem => {
+                        if (typeof labelItem === 'string') {
+                            allLabels.push({ category, label: labelItem });
+                        } else {
+                            allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                        }
+                    });
+                });
+                
+                const labelsList = allLabels.map(l => 
+                    l.score !== undefined ? `${l.label}(${l.score} points)` : l.label
+                ).join(', ');
+                
+                const segmentText = escapeHtml(originalText.substring(segment.start, segment.end));
+                const indexNumber = index + 1;
+                
+                // Determine index color based on categories
+                const categories = new Set(allLabels.map(l => l.category));
+                let indexColor = '#e74c3c'; // Default red color
+                
+                if (categories.size === 1) {
+                    // Single category - use its color
+                    const categoryName = Array.from(categories)[0];
+                    const category = labelConfiguration.categories.find(cat => cat.name === categoryName);
+                    if (category) {
+                        indexColor = category.color;
+                    }
+                } else if (categories.size > 1) {
+                    // Multiple categories - use mixed color (purple)
+                    indexColor = '#9b59b6';
+                }
+                
+                html += `<span class="labeled-segment" data-labels="${labelsList}" title="${labelsList}" style="color: ${indexColor};">`;
+                html += `<sup class="label-index" style="color: ${indexColor};">[${indexNumber}]</sup>${segmentText}`;
+                html += `</span>`;
+                
+                lastPos = segment.end;
+            });
+            
+            // Add any remaining unlabeled text and check for temp highlight
+            if (lastPos < originalText.length) {
+                if (start >= lastPos && start < originalText.length) {
+                    const beforeTemp = originalText.substring(lastPos, start);
+                    const tempSection = originalText.substring(start, end);
+                    const afterTemp = originalText.substring(end);
+                    
+                    html += escapeHtml(beforeTemp);
+                    // Get color from pending label if available
+                    let tempIndexColor = '#f39c12'; // Default orange
+                    if (pendingLabel && pendingLabel.category) {
+                        const category = labelConfiguration.categories.find(cat => cat.name === pendingLabel.category);
+                        if (category) {
+                            tempIndexColor = category.color;
+                        }
+                    }
+                    html += `<span class="temp-highlight" style="color: ${tempIndexColor};"><sup class="label-index temp-index" style="color: ${tempIndexColor};">[${nextIndex}]</sup>${escapeHtml(tempSection)}</span>`;
+                    html += escapeHtml(afterTemp);
+                } else {
+                    html += escapeHtml(originalText.substring(lastPos));
+                }
+            }
+            
+            textContent.innerHTML = html;
+        }
+        
+        // Remove temporary highlight
+        function removeTempHighlight() {
+            renderHighlightedText();
+        }
+        
+        // Set score
+        function setScore(score) {
+            if (!pendingLabel) return;
+            
+            // Mark selected score button
+            document.querySelectorAll('.score-btn').forEach(btn => {
+                if (parseInt(btn.textContent) === score) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            
+            // Delay to let user see selection
+            setTimeout(() => {
+                addLabelWithScore(score);
+            }, 200);
+        }
+        
+        // Skip scoring
+        function skipScore() {
+            if (!pendingLabel) return;
+            addLabelWithScore(null);
+        }
+        
+        // Add label with score
+        function addLabelWithScore(score) {
+            if (!pendingLabel) return;
+            
+            const { category, label, annotation } = pendingLabel;
+            
+            if (!annotation) {
+                alert('Invalid annotation detected. Please try selecting the annotation again.');
+                pendingLabel = null;
+                document.getElementById('scoreSelector').classList.remove('active');
+                return;
+            }
+            
+            // Get comment from textarea
+            const commentText = document.getElementById('labelComment').value.trim();
+            
+            // Add label to the annotation
+            if (!annotation.labels) {
+                annotation.labels = [];
+            }
+            
+            // Check if same label already exists
+            const existingLabelIndex = annotation.labels.findIndex(
+                item => typeof item === 'string' ? item === label : item.label === label && item.category === category
+            );
+            
+            if (existingLabelIndex === -1) {
+                // Add new label
+                const labelObj = { 
+                    label: label, 
+                    category: category 
+                };
+                if (score !== null) {
+                    labelObj.score = score;
+                }
+                if (commentText) {
+                    labelObj.comment = commentText;
+                }
+                annotation.labels.push(labelObj);
+            } else {
+                // Update existing label's score and comment
+                if (typeof annotation.labels[existingLabelIndex] === 'string') {
+                    annotation.labels[existingLabelIndex] = { 
+                        label: annotation.labels[existingLabelIndex], 
+                        category: category
+                    };
+                }
+                
+                if (score !== null) {
+                    annotation.labels[existingLabelIndex].score = score;
+                }
+                if (commentText) {
+                    annotation.labels[existingLabelIndex].comment = commentText;
+                }
+            }
+            
+            // Update annotation color based on labels
+            updateAnnotationColor(annotation);
+            
+            // Clear pending state and redraw
+            pendingLabel = null;
+            document.getElementById('scoreSelector').classList.remove('active');
+            document.getElementById('labelComment').value = ''; // Clear comment field
+            updateAnnotationDisplay();
+            redrawCanvas();
+        }
+        
+        // Update annotation color based on its labels
+        function updateAnnotationColor(annotation) {
+            if (!annotation.labels || annotation.labels.length === 0) {
+                // No labels - use default red color
+                annotation.color = '#ff0000';
+                return;
+            }
+            
+            // Get unique categories from labels
+            const categories = new Set(annotation.labels.map(label => label.category));
+            
+            if (categories.size === 1) {
+                // Single category - use its color
+                const categoryName = Array.from(categories)[0];
+                const categoryConfig = labelConfiguration.categories.find(cat => cat.name === categoryName);
+                if (categoryConfig) {
+                    annotation.color = categoryConfig.color;
+                } else {
+                    annotation.color = '#e74c3c'; // Fallback red
+                }
+            } else if (categories.size > 1) {
+                // Multiple categories - use mixed color (purple)
+                annotation.color = '#9b59b6';
+            }
+        }
+        
+        // Remove label
+        function removeLabel() {
+            // Check if there are any labeled annotations across all images
+            let labeledAnnotations = [];
+            Object.values(imageAnnotations).forEach(annotations => {
+                labeledAnnotations = labeledAnnotations.concat(
+                    annotations.filter(ann => ann.labels && ann.labels.length > 0)
+                );
+            });
+            
+            if (labeledAnnotations.length === 0) {
+                alert('No labeled annotations found to remove labels from');
+                return;
+            }
+            
+            // Show label selection modal for deletion
+            showLabelRemovalModal();
+        }
+        
+        // Show modal for selecting labels to remove
+        function showLabelRemovalModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.id = 'labelRemovalModal';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            modalContent.style.maxWidth = '600px';
+            modalContent.style.maxHeight = '80vh';
+            modalContent.style.overflowY = 'auto';
+            
+            modalContent.innerHTML = `
+                <span class="close" onclick="closeLabelRemovalModal()">&times;</span>
+                <h2>Remove Labels</h2>
+                <p style="margin: 10px 0;">Select the labels you want to delete from any annotation:</p>
+                <div id="labelCheckboxes" style="margin: 20px 0;">
+                    <!-- Label checkboxes will be populated here -->
+                </div>
+                <div class="button-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-danger" onclick="confirmLabelRemoval()">Remove Selected</button>
+                    <button class="btn btn-secondary" onclick="closeLabelRemovalModal()">Cancel</button>
+                </div>
+            `;
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Populate checkboxes for each label from all annotations
+            populateAllLabelCheckboxes();
+        }
+        
+        // Populate checkboxes for all labels from all annotations across all images
+        function populateAllLabelCheckboxes() {
+            const container = document.getElementById('labelCheckboxes');
+            container.innerHTML = '';
+            
+            let hasLabeledAnnotations = false;
+            
+            // Process each image
+            Object.entries(imageAnnotations).forEach(([imageIndex, annotations]) => {
+                const labeledAnnotations = annotations.filter(ann => ann.labels && ann.labels.length > 0);
+                
+                if (labeledAnnotations.length > 0) {
+                    hasLabeledAnnotations = true;
+                    
+                    // Add image header
+                    const imageHeader = document.createElement('div');
+                    imageHeader.style.marginBottom = '20px';
+                    imageHeader.style.marginTop = '20px';
+                    imageHeader.style.padding = '10px 15px';
+                    imageHeader.style.backgroundColor = '#e3f2fd';
+                    imageHeader.style.border = '2px solid #1976d2';
+                    imageHeader.style.borderRadius = '6px';
+                    imageHeader.style.fontWeight = 'bold';
+                    imageHeader.style.fontSize = '16px';
+                    imageHeader.style.color = '#1976d2';
+                    imageHeader.style.cursor = 'pointer';
+                    
+                    const imageName = loadedImages[parseInt(imageIndex)]?.name || `Image ${parseInt(imageIndex) + 1}`;
+                    imageHeader.textContent = `📷 ${imageName}`;
+                    
+                    // Add click handler to switch to this image
+                    imageHeader.onclick = () => {
+                        currentImageIndex = parseInt(imageIndex);
+                        displayCurrentImage();
+                        updateNavigationControls();
+                        closeLabelRemovalModal();
+                    };
+                    
+                    container.appendChild(imageHeader);
+                    
+                    labeledAnnotations.forEach((annotation) => {
+                        // Create annotation header
+                        const annotationHeader = document.createElement('div');
+                        annotationHeader.style.marginBottom = '15px';
+                        annotationHeader.style.marginTop = '10px';
+                        annotationHeader.style.marginLeft = '20px';
+                        annotationHeader.style.padding = '8px 12px';
+                        annotationHeader.style.backgroundColor = '#e8f4f8';
+                        annotationHeader.style.border = '1px solid #bee5eb';
+                        annotationHeader.style.borderRadius = '4px';
+                        annotationHeader.style.fontWeight = 'bold';
+                        annotationHeader.style.fontSize = '14px';
+                        annotationHeader.style.color = '#0c5460';
+                        annotationHeader.style.cursor = 'pointer';
+                        annotationHeader.textContent = `Annotation #${annotation.id} (${annotation.type})`;
+                        
+                        // Add click handler to switch to this image and select annotation
+                        annotationHeader.onclick = () => {
+                            currentImageIndex = parseInt(imageIndex);
+                            displayCurrentImage();
+                            updateNavigationControls();
+                            selectAnnotationById(annotation.id);
+                            closeLabelRemovalModal();
+                        };
+                        
+                        container.appendChild(annotationHeader);
+                        
+                        // Add labels for this annotation
+                        annotation.labels.forEach((labelItem, labelIndex) => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.style.marginBottom = '8px';
+                            checkboxDiv.style.marginLeft = '40px';
+                            checkboxDiv.style.padding = '8px 12px';
+                            checkboxDiv.style.border = '1px solid #e0e0e0';
+                            checkboxDiv.style.borderRadius = '4px';
+                            checkboxDiv.style.backgroundColor = '#f9f9f9';
+                            
+                            const categoryConfig = labelConfiguration.categories.find(cat => cat.name === labelItem.category);
+                            const categoryColor = categoryConfig ? categoryConfig.color : '#e74c3c';
+                            
+                            let labelText = `${labelItem.category}: ${labelItem.label}`;
+                            if (labelItem.score) {
+                                labelText += ` (Score: ${labelItem.score})`;
+                            }
+                            
+                            // Use image index, annotation ID and label index as unique identifier
+                            const uniqueValue = `${imageIndex}-${annotation.id}-${labelIndex}`;
+                            
+                            checkboxDiv.innerHTML = `
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" value="${uniqueValue}" style="margin-right: 10px; transform: scale(1.2);">
+                                    <span style="color: ${categoryColor}; font-weight: 500;">${labelText}</span>
+                                </label>
+                            `;
+                            
+                            container.appendChild(checkboxDiv);
+                        });
+                    });
+                }
+            });
+            
+            if (!hasLabeledAnnotations) {
+                container.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No labeled annotations found.</p>';
+            }
+        }
+        
+        // Confirm and remove selected labels
+        function confirmLabelRemoval() {
+            const checkboxes = document.querySelectorAll('#labelCheckboxes input[type="checkbox"]:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Please select at least one label to remove');
+                return;
+            }
+            
+            // Group selected labels by image and annotation ID
+            const labelsToRemove = {};
+            Array.from(checkboxes).forEach(cb => {
+                const [imageIndex, annotationId, labelIndex] = cb.value.split('-');
+                const imgIdx = parseInt(imageIndex);
+                const id = parseInt(annotationId);
+                const index = parseInt(labelIndex);
+                
+                const key = `${imgIdx}-${id}`;
+                if (!labelsToRemove[key]) {
+                    labelsToRemove[key] = {
+                        imageIndex: imgIdx,
+                        annotationId: id,
+                        labelIndices: []
+                    };
+                }
+                labelsToRemove[key].labelIndices.push(index);
+            });
+            
+            let totalRemoved = 0;
+            const annotationsToDelete = [];
+            
+            // Process each annotation that has labels to remove
+            Object.values(labelsToRemove).forEach(({ imageIndex, annotationId, labelIndices }) => {
+                const annotations = imageAnnotations[imageIndex] || [];
+                const annotation = annotations.find(ann => ann.id === annotationId);
+                
+                if (!annotation) return;
+                
+                // Sort indices in reverse order to avoid shifting during removal
+                const sortedIndices = labelIndices.sort((a, b) => b - a);
+                
+                // Remove labels
+                sortedIndices.forEach(index => {
+                    if (index < annotation.labels.length) {
+                        annotation.labels.splice(index, 1);
+                        totalRemoved++;
+                    }
+                });
+                
+                // Check if annotation should be deleted (no labels left)
+                if (annotation.labels.length === 0) {
+                    annotationsToDelete.push({ imageIndex, annotationId });
+                } else {
+                    // Update color for remaining labels
+                    updateAnnotationColor(annotation);
+                }
+            });
+            
+            // Remove annotations that have no labels left
+            annotationsToDelete.forEach(({ imageIndex, annotationId }) => {
+                const annotations = imageAnnotations[imageIndex] || [];
+                const index = annotations.findIndex(ann => ann.id === annotationId);
+                if (index !== -1) {
+                    annotations.splice(index, 1);
+                    
+                    // Clear current selection if it was deleted and is from current image
+                    if (currentAnnotation && currentAnnotation.id === annotationId && imageIndex === currentImageIndex) {
+                        currentAnnotation = null;
+                    }
+                }
+            });
+            
+            // Close modal and update display
+            closeLabelRemovalModal();
+            updateAnnotationDisplay();
+            redrawCanvas();
+            
+            // Show confirmation
+            if (annotationsToDelete.length > 0) {
+                console.log(`Removed ${totalRemoved} label(s) and deleted ${annotationsToDelete.length} annotation(s) with no remaining labels`);
+            } else {
+                console.log(`Removed ${totalRemoved} label(s) from annotations`);
+            }
+        }
+        
+        // Close label removal modal
+        function closeLabelRemovalModal() {
+            const modal = document.getElementById('labelRemovalModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+        
+        // Create character-level label mapping to handle exact overlaps
+        function createCharacterLabelMap(segments) {
+            const charMap = new Array(originalText.length);
+            for (let i = 0; i < charMap.length; i++) {
+                charMap[i] = [];
+            }
+            
+            // Map each segment's labels to individual characters
+            segments.forEach(segment => {
+                for (let i = segment.start; i < segment.end; i++) {
+                    charMap[i].push({
+                        segmentId: segment.id,
+                        labels: segment.labels
+                    });
+                }
+            });
+            
+            return charMap;
+        }
+        
+        // Break text into continuous segments with same label combinations
+        function createDisplaySegments(charMap) {
+            const displaySegments = [];
+            let i = 0;
+            
+            while (i < charMap.length) {
+                if (charMap[i].length === 0) {
+                    // Unlabeled character - find continuous unlabeled text
+                    let j = i;
+                    while (j < charMap.length && charMap[j].length === 0) {
+                        j++;
+                    }
+                    
+                    displaySegments.push({
+                        start: i,
+                        end: j,
+                        text: originalText.substring(i, j),
+                        labels: {},
+                        isOverlapping: false,
+                        segmentIds: []
+                    });
+                    
+                    i = j;
+                } else {
+                    // Labeled character - find continuous text with same label combination
+                    let j = i;
+                    const currentLabelKey = getLabelKey(charMap[i]);
+                    
+                    while (j < charMap.length && 
+                           charMap[j].length > 0 && 
+                           getLabelKey(charMap[j]) === currentLabelKey) {
+                        j++;
+                    }
+                    
+                    // Combine all labels from all segments covering this range
+                    const combinedLabels = {};
+                    const segmentIds = new Set();
+                    const isOverlapping = charMap[i].length > 1;
+                    
+                    charMap[i].forEach(segmentInfo => {
+                        segmentIds.add(segmentInfo.segmentId);
+                        Object.entries(segmentInfo.labels).forEach(([category, labels]) => {
+                            if (!combinedLabels[category]) {
+                                combinedLabels[category] = [];
+                            }
+                            combinedLabels[category] = [...combinedLabels[category], ...labels];
+                        });
+                    });
+                    
+                    displaySegments.push({
+                        start: i,
+                        end: j,
+                        text: originalText.substring(i, j),
+                        labels: combinedLabels,
+                        isOverlapping: isOverlapping,
+                        segmentIds: Array.from(segmentIds)
+                    });
+                    
+                    i = j;
+                }
+            }
+            
+            return displaySegments;
+        }
+        
+        // Create a unique key for a character's label combination
+        function getLabelKey(charLabelArray) {
+            if (charLabelArray.length === 0) return '';
+            
+            const allLabels = [];
+            charLabelArray.forEach(segmentInfo => {
+                Object.entries(segmentInfo.labels).forEach(([category, labels]) => {
+                    labels.forEach(label => {
+                        const labelStr = typeof label === 'string' ? label : `${label.label}:${label.score}`;
+                        allLabels.push(`${category}:${labelStr}`);
+                    });
+                });
+            });
+            
+            return allLabels.sort().join('|');
+        }
+        
+        // Render highlighted text
+        function renderHighlightedText() {
+            const textContent = document.getElementById('textContent');
+            
+            // Create character-level label mapping
+            const charMap = createCharacterLabelMap(labeledSegments);
+            
+            // Break into display segments based on exact label combinations
+            const displaySegments = createDisplaySegments(charMap);
+            
+            let html = '';
+            let displayIndex = 1;
+            
+            displaySegments.forEach(segment => {
+                if (Object.keys(segment.labels).length === 0) {
+                    // Unlabeled text
+                    html += escapeHtml(segment.text);
+                } else {
+                    // Labeled text - get all labels for tooltip
+                    const allLabels = [];
+                    Object.entries(segment.labels).forEach(([category, labels]) => {
+                        labels.forEach(labelItem => {
+                            if (typeof labelItem === 'string') {
+                                allLabels.push({ category, label: labelItem });
+                            } else {
+                                allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                            }
+                        });
+                    });
+                    
+                    // Prepare label tooltip
+                    const labelsList = allLabels.map(l => 
+                        l.score !== undefined ? `${l.label}(${l.score} points)` : l.label
+                    ).join(', ');
+                    
+                    // Determine color based on overlap status and categories
+                    const categories = new Set(allLabels.map(l => l.category));
+                    let indexColor = '#e74c3c'; // Default red color
+                    
+                    if (segment.isOverlapping) {
+                        // Overlapping characters - use special color
+                        indexColor = '#ff6b35'; // Orange-red for overlapping
+                    } else if (categories.size === 1) {
+                        // Single category - use its color
+                        const categoryName = Array.from(categories)[0];
+                        const category = labelConfiguration.categories.find(cat => cat.name === categoryName);
+                        if (category) {
+                            indexColor = category.color;
+                        }
+                    } else if (categories.size > 1) {
+                        // Multiple categories - use mixed color (purple)
+                        indexColor = '#9b59b6';
+                    }
+                    
+                    // Add special class for overlapping segments
+                    const segmentClass = segment.isOverlapping ? 'labeled-segment overlapping-segment' : 'labeled-segment';
+                    
+                    html += `<span class="${segmentClass}" data-labels="${labelsList}" title="${labelsList}" style="color: ${indexColor};">`;
+                    html += `<sup class="label-index" style="color: ${indexColor};">[${displayIndex}]</sup>${escapeHtml(segment.text)}`;
+                    html += `</span>`;
+                    
+                    displayIndex++;
+                }
+            });
+            
+            textContent.innerHTML = html;
+            setupTextSelection();
+        }
+        
+        // HTML escape
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Clear all
+        
+        // Show statistics
+        function showStats() {
+            if (loadedImages.length === 0) {
+                alert('Please import images first');
+                return;
+            }
+            
+            const statsPanel = document.getElementById('statsPanel');
+            statsPanel.style.display = 'block';
+            
+            // Calculate statistics
+            const stats = calculateStats();
+            
+            // Update statistics table
+            const tbody = document.getElementById('statsTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(stats).forEach(([category, labels]) => {
+                Object.entries(labels).forEach(([label, data]) => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = category;
+                    row.insertCell(1).textContent = label;
+                    row.insertCell(2).textContent = data.count;
+                    
+                    // Calculate average score
+                    const avgCell = row.insertCell(3);
+                    if (data.scores.length > 0) {
+                        const avg = (data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1);
+                        avgCell.textContent = avg;
+                    } else {
+                        avgCell.textContent = '-';
+                    }
+                });
+            });
+            
+            // Display labeled items
+            displayLabeledItems();
+            
+            // Scroll to statistics area
+            statsPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Calculate statistics across all images
+        function calculateStats() {
+            const stats = {};
+            
+            // Initialize stats for all configured categories
+            labelConfiguration.categories.forEach(category => {
+                stats[category.name] = {};
+            });
+            
+            // Process all annotations from all images
+            Object.values(imageAnnotations).forEach(annotations => {
+                annotations.forEach(annotation => {
+                    if (annotation.labels && annotation.labels.length > 0) {
+                        annotation.labels.forEach(labelItem => {
+                            const category = labelItem.category;
+                            const labelName = labelItem.label;
+                            
+                            if (!stats[category]) {
+                                stats[category] = {};
+                            }
+                            
+                            if (!stats[category][labelName]) {
+                                stats[category][labelName] = { count: 0, scores: [] };
+                            }
+                            
+                            stats[category][labelName].count++;
+                            
+                            if (labelItem.score !== undefined) {
+                                stats[category][labelName].scores.push(labelItem.score);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            return stats;
+        }
+        
+        // Display labeled items from all images
+        function displayLabeledItems() {
+            const container = document.getElementById('labeledItemsList');
+            container.innerHTML = '';
+            
+            let hasLabeledItems = false;
+            
+            // Process each image
+            Object.entries(imageAnnotations).forEach(([imageIndex, annotations]) => {
+                const labeledAnnotations = annotations.filter(annotation => 
+                    annotation.labels && annotation.labels.length > 0
+                );
+                
+                if (labeledAnnotations.length > 0) {
+                    hasLabeledItems = true;
+                    
+                    // Add image header
+                    const imageHeader = document.createElement('div');
+                    imageHeader.style.marginBottom = '20px';
+                    imageHeader.style.marginTop = '20px';
+                    imageHeader.style.padding = '10px 15px';
+                    imageHeader.style.backgroundColor = '#e3f2fd';
+                    imageHeader.style.border = '2px solid #1976d2';
+                    imageHeader.style.borderRadius = '6px';
+                    imageHeader.style.fontWeight = 'bold';
+                    imageHeader.style.fontSize = '16px';
+                    imageHeader.style.color = '#1976d2';
+                    imageHeader.style.cursor = 'pointer';
+                    
+                    const imageName = loadedImages[parseInt(imageIndex)]?.name || `Image ${parseInt(imageIndex) + 1}`;
+                    imageHeader.textContent = `📷 ${imageName}`;
+                    
+                    // Add click handler to switch to this image
+                    imageHeader.onclick = () => {
+                        currentImageIndex = parseInt(imageIndex);
+                        displayCurrentImage();
+                        updateNavigationControls();
+                    };
+                    
+                    container.appendChild(imageHeader);
+                    
+                    labeledAnnotations.forEach((annotation) => {
+                const item = document.createElement('div');
+                item.className = 'labeled-item';
+                item.style.cursor = 'pointer';
+                item.onclick = () => selectAnnotationById(annotation.id);
+                
+                const indexDiv = document.createElement('div');
+                indexDiv.style.fontWeight = 'bold';
+                indexDiv.style.marginBottom = '5px';
+                indexDiv.style.fontSize = '14px';
+                
+                // Determine index color based on categories
+                const categories = new Set(annotation.labels.map(l => l.category));
+                let indexColor = annotation.color || '#e74c3c'; // Use annotation color or default
+                
+                if (categories.size > 1) {
+                    // Multiple categories - use mixed color (purple)
+                    indexColor = '#9b59b6';
+                }
+                
+                indexDiv.style.color = indexColor;
+                indexDiv.textContent = `Annotation #${annotation.id}`;
+                
+                const typeDiv = document.createElement('div');
+                typeDiv.className = 'labeled-item-text';
+                typeDiv.style.fontStyle = 'italic';
+                typeDiv.style.color = '#666';
+                typeDiv.textContent = `${annotation.type} annotation (thickness: ${annotation.thickness}px)`;
+                
+                const labelsDiv = document.createElement('div');
+                labelsDiv.className = 'labeled-item-labels';
+                
+                annotation.labels.forEach(labelItem => {
+                    const labelContainer = document.createElement('div');
+                    labelContainer.style.marginBottom = '8px';
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'label-badge';
+                    // Find the category configuration and use its ID
+                    const categoryConfig = labelConfiguration.categories.find(cat => cat.name === labelItem.category);
+                    if (categoryConfig) {
+                        badge.classList.add(categoryConfig.id);
+                    }
+                    
+                    if (!labelItem.score) {
+                        badge.textContent = labelItem.label;
+                    } else {
+                        // Label with score
+                        const labelWithScore = document.createElement('span');
+                        labelWithScore.className = 'label-with-score';
+                        labelWithScore.innerHTML = `${labelItem.label} <span class="score-badge">${labelItem.score}</span>`;
+                        badge.appendChild(labelWithScore);
+                    }
+                    
+                    labelContainer.appendChild(badge);
+                    
+                    // Add comment if it exists
+                    if (labelItem.comment) {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.style.marginTop = '4px';
+                        commentDiv.style.fontSize = '12px';
+                        commentDiv.style.color = '#666';
+                        commentDiv.style.fontStyle = 'italic';
+                        commentDiv.style.padding = '4px 8px';
+                        commentDiv.style.backgroundColor = '#f8f9fa';
+                        commentDiv.style.borderRadius = '3px';
+                        commentDiv.style.border = '1px solid #e9ecef';
+                        commentDiv.textContent = `💬 ${labelItem.comment}`;
+                        labelContainer.appendChild(commentDiv);
+                    }
+                    
+                    labelsDiv.appendChild(labelContainer);
+                });
+                
+                item.appendChild(indexDiv);
+                item.appendChild(typeDiv);
+                item.appendChild(labelsDiv);
+                container.appendChild(item);
+                    });
+                }
+            });
+            
+            if (!hasLabeledItems) {
+                const noItemsMessage = document.createElement('div');
+                noItemsMessage.style.textAlign = 'center';
+                noItemsMessage.style.padding = '40px 20px';
+                noItemsMessage.style.color = '#666';
+                noItemsMessage.style.fontStyle = 'italic';
+                noItemsMessage.textContent = 'No labeled annotations found across all images';
+                container.appendChild(noItemsMessage);
+            }
+        }
+        
+        // Generate highlighted text for PDF
+        function generateHighlightedTextForPDF() {
+            if (!originalText) return '';
+            
+            // Create character-level label mapping for precise overlaps
+            const charMap = createCharacterLabelMap(labeledSegments);
+            const displaySegments = createDisplaySegments(charMap);
+            
+            let html = '';
+            let displayIndex = 1;
+            
+            // Process each display segment
+            displaySegments.forEach(segment => {
+                if (Object.keys(segment.labels).length === 0) {
+                    // Unlabeled text
+                    html += escapeHtml(segment.text).replace(/\n/g, '<br>');
+                } else {
+                    // Labeled text - get all labels for reference
+                    const allLabels = [];
+                    Object.entries(segment.labels).forEach(([category, labels]) => {
+                        labels.forEach(labelItem => {
+                            if (typeof labelItem === 'string') {
+                                allLabels.push({ category, label: labelItem });
+                            } else {
+                                allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                            }
+                        });
+                    });
+                    
+                    // Prepare label information
+                    const labelsList = allLabels.map(l => 
+                        l.score !== undefined ? `${l.label}(${l.score} points)` : l.label
+                    ).join(', ');
+                    
+                    // Add the labeled text with numeric index
+                    const segmentText = escapeHtml(segment.text).replace(/\n/g, '<br>');
+                    
+                    // Determine color based on overlap status and categories
+                    const categories = new Set(allLabels.map(l => l.category));
+                    let indexColor = '#e74c3c'; // Default red color
+                    
+                    if (segment.isOverlapping) {
+                        // Overlapping characters - use special color
+                        indexColor = '#ff6b35'; // Orange-red for overlapping
+                    } else if (categories.size === 1) {
+                        // Single category - use its color
+                        const categoryName = Array.from(categories)[0];
+                        const category = labelConfiguration.categories.find(cat => cat.name === categoryName);
+                        if (category) {
+                            indexColor = category.color;
+                        }
+                    } else if (categories.size > 1) {
+                        // Multiple categories - use mixed color (purple)
+                        indexColor = '#9b59b6';
+                    }
+                    
+                    html += `<span style="position: relative; font-weight: bold; color: ${indexColor};" title="${labelsList}">`;
+                    html += `<sup style="color: ${indexColor}; font-weight: bold; font-size: 12px;">[${displayIndex}]</sup>${segmentText}`;
+                    html += `</span>`;
+                    
+                    displayIndex++;
+                }
+            });
+            
+            return html;
+        }
+        
+        // Show filename input Modal
+        function exportPDF() {
+            if (loadedImages.length === 0) {
+                alert('Please import images first');
+                return;
+            }
+            
+            // Set default filename
+            const defaultFilename = `Qualitative_Data_Label_Analysis_Report_${new Date().toISOString().split('T')[0]}`;
+            document.getElementById('filenameInput').value = defaultFilename;
+            updateFilenamePreview();
+            
+            // Show modal
+            document.getElementById('filenameModal').style.display = 'block';
+        }
+        
+        // Close filename input Modal
+        function closeFilenameModal() {
+            document.getElementById('filenameModal').style.display = 'none';
+            document.getElementById('filenameInput').value = '';
+        }
+        
+        // Update filename preview
+        function updateFilenamePreview() {
+            const filename = document.getElementById('filenameInput').value.trim();
+            const preview = filename || 'filename';
+            document.getElementById('filenamePreview').textContent = preview + '.pdf';
+        }
+        
+        // Confirm export PDF
+        function confirmExportPDF() {
+            const filename = document.getElementById('filenameInput').value.trim();
+            if (!filename) {
+                alert('Please enter a filename');
+                return;
+            }
+            
+            closeFilenameModal();
+            generatePDF(filename);
+        }
+        
+        // Actually generate PDF
+        function generatePDF(filename) {
+            if (loadedImages.length === 0) {
+                alert('Please import images first');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm');
+            const pageWidth = 210; // A4 width (mm)
+            const pageHeight = 297; // A4 height (mm)
+            const margin = 20;
+            
+            const originalImageIndex = currentImageIndex; // Store original image index
+            let processedImages = 0;
+            
+            // Function to process each image
+            async function processImage(imageIndex) {
+                return new Promise((resolve) => {
+                    // Switch to the image
+                    currentImageIndex = imageIndex;
+                    displayCurrentImage();
+                    
+                    // Give time for the canvas to update
+                    setTimeout(() => {
+                        html2canvas(canvas, {
+                            scale: 1,
+                            useCORS: true,
+                            allowTaint: true,
+                            backgroundColor: '#ffffff'
+                        }).then(canvasImage => {
+                            const canvasImgData = canvasImage.toDataURL('image/png');
+                            
+                            // Add new page if not the first image
+                            if (imageIndex > 0) {
+                                doc.addPage();
+                            }
+                            
+                            // Add title for each page
+                            doc.setFontSize(20);
+                            doc.text('Image Annotation Analysis Report', pageWidth / 2, 20, { align: 'center' });
+                            
+                            doc.setFontSize(12);
+                            doc.text(`Generated Date: ${new Date().toLocaleDateString('en-US')}`, pageWidth / 2, 30, { align: 'center' });
+                            
+                            // Add image name/number
+                            const imageName = loadedImages[imageIndex]?.name || `Image ${imageIndex + 1}`;
+                            doc.setFontSize(14);
+                            doc.text(`Image: ${imageName}`, pageWidth / 2, 40, { align: 'center' });
+                            
+                            // Calculate image dimensions for PDF
+                            const availableWidth = pageWidth - (2 * margin);
+                            const availableHeight = (pageHeight * 0.75) - margin; // Use 75% of page for image (1.5x larger)
+                            
+                            // Calculate scaled dimensions maintaining aspect ratio
+                            const aspectRatio = canvas.width / canvas.height;
+                            let imgWidth = availableWidth;
+                            let imgHeight = imgWidth / aspectRatio;
+                            
+                            if (imgHeight > availableHeight) {
+                                imgHeight = availableHeight;
+                                imgWidth = imgHeight * aspectRatio;
+                            }
+                            
+                            // Add the annotated image
+                            const imageX = (pageWidth - imgWidth) / 2;
+                            const imageY = 50;
+                            doc.addImage(canvasImgData, 'PNG', imageX, imageY, imgWidth, imgHeight);
+                            
+                            resolve();
+                        });
+                    }, 100); // Small delay to ensure canvas updates
+                });
+            }
+            
+            // Process all images sequentially
+            async function processAllImages() {
+                for (let i = 0; i < loadedImages.length; i++) {
+                    await processImage(i);
+                }
+                
+                // Restore original image
+                currentImageIndex = originalImageIndex;
+                displayCurrentImage();
+                
+                // Add statistics page
+                doc.addPage();
+                
+                // Calculate statistics
+                const stats = calculateStats();
+                
+                // Create statistics table HTML
+                const statsElement = document.createElement('div');
+                statsElement.style.padding = '20px';
+                statsElement.style.fontFamily = 'Arial, sans-serif';
+                statsElement.style.fontSize = '12px';
+                statsElement.style.backgroundColor = 'white';
+                statsElement.style.width = '170mm'; // Fit A4 with margins
+                
+                let statsHTML = `
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Label Statistics Summary</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Category</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Label</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Count</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Avg Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                Object.entries(stats).forEach(([category, labels]) => {
+                    Object.entries(labels).forEach(([label, data]) => {
+                        const avgScore = data.scores.length > 0 
+                            ? (data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1)
+                            : '-';
+                        
+                        statsHTML += `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 6px;">${category}</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">${label}</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">${data.count}</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">${avgScore}</td>
+                            </tr>
+                        `;
+                    });
+                });
+                
+                statsHTML += `
+                        </tbody>
+                    </table>
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Annotation Details</h3>
+                `;
+                
+                // Add annotation details grouped by image
+                Object.entries(imageAnnotations).forEach(([imageIndex, annotations]) => {
+                    const labeledAnnotations = annotations.filter(ann => ann.labels && ann.labels.length > 0);
+                    if (labeledAnnotations.length > 0) {
+                        const imageName = loadedImages[parseInt(imageIndex)]?.name || `Image ${parseInt(imageIndex) + 1}`;
+                        statsHTML += `<h4 style="margin-top: 20px; margin-bottom: 10px; color: #1976d2;">Image: ${imageName}</h4>`;
+                        
+                        labeledAnnotations.forEach((annotation) => {
+                            const labelsList = annotation.labels.map(labelItem => {
+                                let labelText = labelItem.label;
+                                if (labelItem.score) {
+                                    labelText += ` (${labelItem.score} pts)`;
+                                }
+                                return labelText;
+                            }).join(', ');
+                            
+                            // Collect comments for this annotation
+                            const comments = annotation.labels
+                                .filter(labelItem => labelItem.comment)
+                                .map(labelItem => `• ${labelItem.label}: ${labelItem.comment}`)
+                                .join('<br>');
+                            
+                            statsHTML += `
+                                <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 3px;">
+                                    <strong>Annotation #${annotation.id}</strong> (${annotation.type})<br>
+                                    <span style="color: #666;">Labels: ${labelsList}</span>
+                                    ${comments ? `<br><br><div style="margin-top: 8px; padding: 6px; background-color: #f8f9fa; border-radius: 3px; font-size: 11px;"><strong>Comments:</strong><br>${comments}</div>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+                });
+                
+                statsHTML += '</div>';
+                statsElement.innerHTML = statsHTML;
+                
+                // Temporarily add stats element to page
+                statsElement.style.position = 'absolute';
+                statsElement.style.left = '-9999px';
+                document.body.appendChild(statsElement);
+                
+                // Capture the statistics table
+                html2canvas(statsElement, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                }).then(statsCanvas => {
+                    const statsImgData = statsCanvas.toDataURL('image/png');
+                    
+                    // Add title for statistics page
+                    doc.setFontSize(20);
+                    doc.text('Statistics Summary', pageWidth / 2, 20, { align: 'center' });
+                    
+                    // Add statistics image
+                    const availableWidth = pageWidth - (2 * margin);
+                    const statsHeight = (statsCanvas.height * availableWidth) / statsCanvas.width;
+                    doc.addImage(statsImgData, 'PNG', margin, 30, availableWidth, statsHeight);
+                    
+                    // Remove temporary element
+                    document.body.removeChild(statsElement);
+                    
+                    // Save PDF
+                    doc.save(`${filename}.pdf`);
+                }).catch(error => {
+                    console.error('Statistics capture failed:', error);
+                    // Remove temporary element
+                    if (document.body.contains(statsElement)) {
+                        document.body.removeChild(statsElement);
+                    }
+                    
+                    // Save PDF without statistics
+                    doc.save(`${filename}.pdf`);
+                });
+            }
+            
+            // Start processing all images
+            processAllImages().catch(error => {
+                console.error('PDF generation failed:', error);
+                alert('PDF generation failed. Please check browser console for detailed error information');
+                
+                // Restore original image on error
+                currentImageIndex = originalImageIndex;
+                displayCurrentImage();
+            });
+        }
+        
+        // Populate configuration modal
+        function populateConfigModal() {
+            // Set global settings
+            document.getElementById('enableScoring').checked = labelConfiguration.enableScoring;
+            
+            // Clear and populate categories
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+            
+            labelConfiguration.categories.forEach((category, categoryIndex) => {
+                addCategoryToModal(category, categoryIndex);
+            });
+        }
+        
+        // Add category to modal
+        function addCategoryToModal(category, categoryIndex) {
+            const container = document.getElementById('categoriesContainer');
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category-config';
+            categoryDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" value="${category.name}" placeholder="Category Name" 
+                           class="config-input" style="flex: 1;" 
+                           onchange="updateCategoryName(${categoryIndex}, this.value)">
+                    <input type="color" value="${category.color}" class="color-picker" 
+                           onchange="updateCategoryColor(${categoryIndex}, this.value)">
+                    <button class="remove-btn" onclick="removeCategory(${categoryIndex})">Remove</button>
+                </div>
+                <div>
+                    <h4 style="margin: 10px 0;">Tags:</h4>
+                    <div id="tags-${categoryIndex}">
+                        <!-- Tags will be populated here -->
+                    </div>
+                    <button class="add-btn" onclick="addTag(${categoryIndex})">Add Tag</button>
+                </div>
+            `;
+            
+            container.appendChild(categoryDiv);
+            
+            // Populate tags
+            category.tags.forEach((tag, tagIndex) => {
+                addTagToModal(categoryIndex, tag, tagIndex);
+            });
+        }
+        
+        // Add tag to modal
+        function addTagToModal(categoryIndex, tag, tagIndex) {
+            const container = document.getElementById(`tags-${categoryIndex}`);
+            
+            const tagDiv = document.createElement('div');
+            tagDiv.className = 'tag-config';
+            tagDiv.innerHTML = `
+                <input type="text" value="${tag.name}" placeholder="Tag Name" 
+                       onchange="updateTagName(${categoryIndex}, ${tagIndex}, this.value)">
+                <span>Score:</span>
+                <input type="number" value="${tag.minScore}" class="config-input-small" 
+                       onchange="updateTagMinScore(${categoryIndex}, ${tagIndex}, this.value)">
+                <span>to</span>
+                <input type="number" value="${tag.maxScore}" class="config-input-small" 
+                       onchange="updateTagMaxScore(${categoryIndex}, ${tagIndex}, this.value)">
+                <button class="remove-btn" onclick="removeTag(${categoryIndex}, ${tagIndex})">Remove</button>
+            `;
+            
+            container.appendChild(tagDiv);
+        }
+        
+        // Configuration update functions
+        function updateCategoryName(categoryIndex, name) {
+            labelConfiguration.categories[categoryIndex].name = name;
+        }
+        
+        function updateCategoryColor(categoryIndex, color) {
+            labelConfiguration.categories[categoryIndex].color = color;
+        }
+        
+        function updateTagName(categoryIndex, tagIndex, name) {
+            labelConfiguration.categories[categoryIndex].tags[tagIndex].name = name;
+        }
+        
+        function updateTagMinScore(categoryIndex, tagIndex, score) {
+            labelConfiguration.categories[categoryIndex].tags[tagIndex].minScore = parseInt(score);
+        }
+        
+        function updateTagMaxScore(categoryIndex, tagIndex, score) {
+            labelConfiguration.categories[categoryIndex].tags[tagIndex].maxScore = parseInt(score);
+        }
+        
+        // Add new category
+        function addCategory() {
+            const newCategory = {
+                id: 'category' + Date.now(),
+                name: 'New Category',
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                tags: []
+            };
+            
+            labelConfiguration.categories.push(newCategory);
+            populateConfigModal();
+        }
+        
+        // Remove category
+        function removeCategory(categoryIndex) {
+            if (confirm('Are you sure you want to remove this category?')) {
+                labelConfiguration.categories.splice(categoryIndex, 1);
+                populateConfigModal();
+            }
+        }
+        
+        // Add new tag
+        function addTag(categoryIndex) {
+            const newTag = {
+                name: 'New Tag',
+                minScore: 0,
+                maxScore: 5
+            };
+            
+            labelConfiguration.categories[categoryIndex].tags.push(newTag);
+            populateConfigModal();
+        }
+        
+        // Remove tag
+        function removeTag(categoryIndex, tagIndex) {
+            if (confirm('Are you sure you want to remove this tag?')) {
+                labelConfiguration.categories[categoryIndex].tags.splice(tagIndex, 1);
+                populateConfigModal();
+            }
+        }
+        
+        // Save configuration
+        function saveConfiguration() {
+            // Update global settings
+            labelConfiguration.enableScoring = document.getElementById('enableScoring').checked;
+            
+            // Validate configuration
+            for (let category of labelConfiguration.categories) {
+                if (!category.name.trim()) {
+                    alert('Please provide names for all categories.');
+                    return;
+                }
+                for (let tag of category.tags) {
+                    if (!tag.name.trim()) {
+                        alert('Please provide names for all tags.');
+                        return;
+                    }
+                    if (tag.minScore > tag.maxScore) {
+                        alert(`Invalid score range for tag "${tag.name}". Min score cannot be greater than max score.`);
+                        return;
+                    }
+                }
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('labelConfiguration', JSON.stringify(labelConfiguration));
+            
+            // Regenerate interface
+            generateLabelInterface();
+            
+            // Close modal
+            closeConfigModal();
+            
+            alert('Configuration saved successfully!');
+        }
+        
+        // Reset to default configuration
+        function resetToDefault() {
+            if (confirm('Are you sure you want to reset to default configuration? This will overwrite your current settings.')) {
+                labelConfiguration = JSON.parse(JSON.stringify(defaultConfiguration));
+                localStorage.setItem('labelConfiguration', JSON.stringify(labelConfiguration));
+                generateLabelInterface();
+                populateConfigModal();
+                alert('Configuration reset to default.');
+            }
+        }
+        
+        // Add real-time preview for filename input
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize configuration
+            initializeConfiguration();
+            
+            // Initialize canvas
+            initializeCanvas();
+            
+            const filenameInput = document.getElementById('filenameInput');
+            if (filenameInput) {
+                filenameInput.addEventListener('input', updateFilenamePreview);
+                filenameInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        confirmExportPDF();
+                    }
+                });
+            }
+        });
+        
+        // Image Reorder Functions
+        function showImageReorderModal() {
+            if (loadedImages.length <= 1) {
+                alert('You need at least 2 images to reorder them.');
+                return;
+            }
+            
+            populateImageReorderList();
+            document.getElementById('imageReorderModal').style.display = 'block';
+        }
+        
+        function closeImageReorderModal() {
+            document.getElementById('imageReorderModal').style.display = 'none';
+        }
+        
+        function populateImageReorderList() {
+            const container = document.getElementById('imageReorderList');
+            container.innerHTML = '';
+            
+            loadedImages.forEach((imageData, index) => {
+                const item = document.createElement('div');
+                item.className = 'image-reorder-item';
+                item.draggable = true;
+                item.dataset.imageIndex = index;
+                
+                // Get annotation count for this image
+                const annotationCount = (imageAnnotations[index] || []).length;
+                const labeledCount = (imageAnnotations[index] || []).filter(ann => ann.labels && ann.labels.length > 0).length;
+                
+                item.innerHTML = `
+                    <div class="drag-handle">⋮⋮</div>
+                    <img src="${imageData.src}" alt="${imageData.name}" class="image-thumbnail">
+                    <div class="image-info">
+                        <div class="image-name">${imageData.name}</div>
+                        <div class="image-details">${annotationCount} annotations, ${labeledCount} labeled</div>
+                    </div>
+                    <div class="image-order">${index + 1}</div>
+                `;
+                
+                // Add drag event listeners
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+                
+                container.appendChild(item);
+            });
+        }
+        
+        let draggedElement = null;
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Add visual feedback
+            this.classList.add('drag-over');
+            
+            return false;
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            this.classList.remove('drag-over');
+            
+            if (draggedElement !== this) {
+                const draggedIndex = parseInt(draggedElement.dataset.imageIndex);
+                const targetIndex = parseInt(this.dataset.imageIndex);
+                
+                // Reorder the images array
+                reorderImages(draggedIndex, targetIndex);
+                
+                // Refresh the list
+                populateImageReorderList();
+                
+                // Update navigation if currently viewing affected images
+                updateNavigationAfterReorder();
+            }
+            
+            return false;
+        }
+        
+        function handleDragEnd(e) {
+            // Clean up all drag-related classes
+            document.querySelectorAll('.image-reorder-item').forEach(item => {
+                item.classList.remove('dragging', 'drag-over');
+            });
+            
+            draggedElement = null;
+        }
+        
+        function reorderImages(fromIndex, toIndex) {
+            // Move the image in the loadedImages array
+            const movedImage = loadedImages.splice(fromIndex, 1)[0];
+            loadedImages.splice(toIndex, 0, movedImage);
+            
+            // Create a mapping of old indices to new indices
+            const indexMapping = {};
+            
+            // First, handle the moved item
+            if (fromIndex < toIndex) {
+                // Moving down: items between fromIndex and toIndex move up
+                for (let i = fromIndex + 1; i <= toIndex; i++) {
+                    indexMapping[i] = i - 1;
+                }
+                indexMapping[fromIndex] = toIndex;
+            } else {
+                // Moving up: items between toIndex and fromIndex move down
+                for (let i = toIndex; i < fromIndex; i++) {
+                    indexMapping[i] = i + 1;
+                }
+                indexMapping[fromIndex] = toIndex;
+            }
+            
+            // Update imageAnnotations object with new indices
+            const newImageAnnotations = {};
+            Object.entries(imageAnnotations).forEach(([oldIndex, annotations]) => {
+                const oldIdx = parseInt(oldIndex);
+                const newIdx = indexMapping.hasOwnProperty(oldIdx) ? indexMapping[oldIdx] : oldIdx;
+                newImageAnnotations[newIdx] = annotations;
+            });
+            
+            imageAnnotations = newImageAnnotations;
+            
+            // Update currentImageIndex if necessary
+            if (currentImageIndex === fromIndex) {
+                currentImageIndex = toIndex;
+            } else if (fromIndex < toIndex && currentImageIndex > fromIndex && currentImageIndex <= toIndex) {
+                currentImageIndex--;
+            } else if (fromIndex > toIndex && currentImageIndex >= toIndex && currentImageIndex < fromIndex) {
+                currentImageIndex++;
+            }
+        }
+        
+        function updateNavigationAfterReorder() {
+            updateNavigationControls();
+            displayCurrentImage();
+            displayLabeledItems(); // Refresh the statistics display
+        }
+        
+        // Click outside modal to close
+        window.onclick = function(event) {
+            const importModal = document.getElementById('importModal');
+            const filenameModal = document.getElementById('filenameModal');
+            const configModal = document.getElementById('configModal');
+            const imageReorderModal = document.getElementById('imageReorderModal');
+            
+            if (event.target == importModal) {
+                closeImportModal();
+            } else if (event.target == filenameModal) {
+                closeFilenameModal();
+            } else if (event.target == configModal) {
+                closeConfigModal();
+            } else if (event.target == imageReorderModal) {
+                closeImageReorderModal();
+            }
+        }
+    </script>
+</body>
+</html>
