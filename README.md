@@ -11,7 +11,7 @@ An interactive statistics learning tool featuring:
 - Gradient background design with responsive layout
 - Educational content in Traditional Chinese
 
-### 🏷️ Ezivo.html & Ezivo-CYC.html
+### 🏷️ Ezivo.html & Ezivo-CYC.html & Ezivo-fig-CYC.html 
 Advanced qualitative data labeling systems with:
 - **Ezivo.html**: Text annotation and tagging functionality (Mandarin version)
   - PDF export capabilities using jsPDF and html2canvas
@@ -22,10 +22,13 @@ Advanced qualitative data labeling systems with:
   - Sophisticated text coding and annotation system
   - Customizable labeling categories with color coding
   - Interactive text selection and scoring (1-10 scale)
+  - Comment functions
   - Comprehensive statistical analysis and reporting
   - PDF export with labeled text and analytics
   - Data persistence with local storage
   - Designed for academic research and content analysis
+- **Ezivo--fig-CYC.html**: Adapted version from Ezivo-CYC
+  - Sophisticated image coding and annotation system
 
 ### 📈 Visualizing multiple relationships.html
 A three-variable relationship visualization tool including:
