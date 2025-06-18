@@ -443,6 +443,63 @@
             font-weight: bold;
         }
         
+        .comment-input-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .comment-input-container {
+            margin-top: 10px;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .comment-badge {
+            background-color: #28a745;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 10px;
+            margin-left: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .comments-cell {
+            max-width: 200px;
+            font-size: 13px;
+            line-height: 1.3;
+        }
+        
+        .comment-count {
+            color: #17a2b8;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        
+        .comment-count:hover {
+            color: #138496;
+        }
+        
         .temp-highlight {
             background-color: #fff3cd;
             border: 2px solid #ffc107;
@@ -664,6 +721,16 @@
                             <!-- Dynamic score buttons will be generated here -->
                         </div>
                         <button class="skip-score-btn" onclick="skipScore()">Skip Rating</button>
+                    </div>
+                    
+                    <div class="comment-input-section">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableComment" onchange="toggleCommentInput()">
+                            <label for="enableComment">Add Comment</label>
+                        </div>
+                        <div id="commentInputContainer" class="comment-input-container" style="display: none;">
+                            <textarea id="commentInput" class="comment-input" placeholder="Enter your comment here..." rows="3"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1618,6 +1685,20 @@
             renderHighlightedText();
         }
         
+        // Toggle comment input visibility
+        function toggleCommentInput() {
+            const checkbox = document.getElementById('enableComment');
+            const container = document.getElementById('commentInputContainer');
+            
+            if (checkbox.checked) {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+                // Clear comment input when hiding
+                document.getElementById('commentInput').value = '';
+            }
+        }
+        
         // Set score
         function setScore(score) {
             if (!pendingLabel) return;
@@ -1649,6 +1730,10 @@
             
             const { category, label, selection } = pendingLabel;
             
+            // Get comment from input field
+            const commentInput = document.getElementById('commentInput');
+            const comment = commentInput.value.trim() || null;
+            
             // Validate selection before proceeding
             if (!validateSelection(selection)) {
                 alert('Invalid selection detected. Please try selecting the text again.');
@@ -1677,21 +1762,37 @@
                 
                 if (existingLabelIndex === -1) {
                     // Add new label
-                    if (score !== null) {
-                        existingSegment.labels[category].push({ label: label, score: score });
+                    const labelObj = { label: label };
+                    if (score !== null) labelObj.score = score;
+                    if (comment) labelObj.comment = comment;
+                    
+                    if (score !== null || comment) {
+                        existingSegment.labels[category].push(labelObj);
                     } else {
                         existingSegment.labels[category].push(label);
                     }
                 } else {
-                    // Update existing label's score
-                    if (score !== null) {
-                        existingSegment.labels[category][existingLabelIndex] = { label: label, score: score };
+                    // Update existing label's score and comment
+                    const labelObj = { label: label };
+                    if (score !== null) labelObj.score = score;
+                    if (comment) labelObj.comment = comment;
+                    
+                    if (score !== null || comment) {
+                        existingSegment.labels[category][existingLabelIndex] = labelObj;
                     }
                 }
             } else {
                 // Create new labeled segment
                 const newLabels = {};
-                newLabels[category] = score !== null ? [{ label: label, score: score }] : [label];
+                const labelObj = { label: label };
+                if (score !== null) labelObj.score = score;
+                if (comment) labelObj.comment = comment;
+                
+                if (score !== null || comment) {
+                    newLabels[category] = [labelObj];
+                } else {
+                    newLabels[category] = [label];
+                }
                 
                 labeledSegments.push({
                     id: segmentIdCounter++,
@@ -1708,6 +1809,12 @@
             pendingLabel = null;
             document.getElementById('selectedText').textContent = 'No text selected';
             document.getElementById('scoreSelector').classList.remove('active');
+            
+            // Clear comment input and hide comment section
+            commentInput.value = '';
+            document.getElementById('enableComment').checked = false;
+            document.getElementById('commentInputContainer').style.display = 'none';
+            
             removeTempHighlight();
         }
         
@@ -1995,12 +2102,17 @@
                     labels.forEach(labelItem => {
                         const labelName = typeof labelItem === 'string' ? labelItem : labelItem.label;
                         if (!stats[category][labelName]) {
-                            stats[category][labelName] = { count: 0, scores: [] };
+                            stats[category][labelName] = { count: 0, scores: [], comments: [] };
                         }
                         stats[category][labelName].count++;
                         
-                        if (typeof labelItem === 'object' && labelItem.score !== undefined) {
-                            stats[category][labelName].scores.push(labelItem.score);
+                        if (typeof labelItem === 'object') {
+                            if (labelItem.score !== undefined) {
+                                stats[category][labelName].scores.push(labelItem.score);
+                            }
+                            if (labelItem.comment) {
+                                stats[category][labelName].comments.push(labelItem.comment);
+                            }
                         }
                     });
                 });
@@ -2037,7 +2149,10 @@
                         if (typeof labelItem === 'string') {
                             allLabels.push({ category, label: labelItem });
                         } else {
-                            allLabels.push({ category, label: labelItem.label, score: labelItem.score });
+                            const labelData = { category, label: labelItem.label };
+                            if (labelItem.score !== undefined) labelData.score = labelItem.score;
+                            if (labelItem.comment) labelData.comment = labelItem.comment;
+                            allLabels.push(labelData);
                         }
                     });
                 });
@@ -2068,8 +2183,23 @@
                 textDiv.textContent = segment.text.length > 100 ? 
                     segment.text.substring(0, 100) + '...' : segment.text;
                 
+                // Create a combined labels and comments section
+                const labelsAndCommentsDiv = document.createElement('div');
+                labelsAndCommentsDiv.className = 'labeled-item-details';
+                labelsAndCommentsDiv.style.marginTop = '8px';
+                
+                // Labels section header
+                const labelsHeaderDiv = document.createElement('div');
+                labelsHeaderDiv.style.fontWeight = 'bold';
+                labelsHeaderDiv.style.marginBottom = '6px';
+                labelsHeaderDiv.style.color = '#666';
+                labelsHeaderDiv.textContent = 'Labels:';
+                labelsAndCommentsDiv.appendChild(labelsHeaderDiv);
+                
+                // Labels badges
                 const labelsDiv = document.createElement('div');
                 labelsDiv.className = 'labeled-item-labels';
+                labelsDiv.style.marginBottom = '8px';
                 
                 Object.entries(segment.labels).forEach(([category, labels]) => {
                     labels.forEach(labelItem => {
@@ -2084,20 +2214,64 @@
                         if (typeof labelItem === 'string') {
                             badge.textContent = labelItem;
                         } else {
-                            // Label with score
-                            const labelWithScore = document.createElement('span');
-                            labelWithScore.className = 'label-with-score';
-                            labelWithScore.innerHTML = `${labelItem.label} <span class="score-badge">${labelItem.score}</span>`;
-                            badge.appendChild(labelWithScore);
+                            // Label with score (removing comment badge since comments will be shown separately)
+                            const labelContainer = document.createElement('span');
+                            labelContainer.className = 'label-with-extras';
+                            
+                            let labelHTML = labelItem.label;
+                            
+                            // Add score badge if present
+                            if (labelItem.score !== undefined) {
+                                labelHTML += ` <span class="score-badge">${labelItem.score}</span>`;
+                            }
+                            
+                            labelContainer.innerHTML = labelHTML;
+                            badge.appendChild(labelContainer);
                         }
                         
                         labelsDiv.appendChild(badge);
                     });
                 });
                 
+                labelsAndCommentsDiv.appendChild(labelsDiv);
+                
+                // Add comments section if any labels have comments
+                const hasComments = allLabels.some(label => label.comment);
+                if (hasComments) {
+                    const commentsHeaderDiv = document.createElement('div');
+                    commentsHeaderDiv.style.fontWeight = 'bold';
+                    commentsHeaderDiv.style.marginTop = '8px';
+                    commentsHeaderDiv.style.marginBottom = '6px';
+                    commentsHeaderDiv.style.color = '#666';
+                    commentsHeaderDiv.textContent = 'Comments:';
+                    labelsAndCommentsDiv.appendChild(commentsHeaderDiv);
+                    
+                    allLabels.forEach((label, index) => {
+                        if (label.comment) {
+                            const commentItem = document.createElement('div');
+                            commentItem.style.marginBottom = '6px';
+                            commentItem.style.padding = '6px 8px';
+                            commentItem.style.backgroundColor = '#f8f9fa';
+                            commentItem.style.borderRadius = '4px';
+                            commentItem.style.fontSize = '14px';
+                            commentItem.style.borderLeft = '3px solid #28a745';
+                            
+                            // Create label identifier with category and score if available
+                            let labelIdentifier = `${label.category} → ${label.label}`;
+                            if (label.score !== undefined) {
+                                labelIdentifier += ` (${label.score} points)`;
+                            }
+                            
+                            commentItem.innerHTML = `<strong style="color: #2c3e50; font-size: 13px;">${labelIdentifier}:</strong><br><span style="color: #444; line-height: 1.4;">${escapeHtml(label.comment)}</span>`;
+                            labelsAndCommentsDiv.appendChild(commentItem);
+                        }
+                    });
+                }
+                
                 item.appendChild(indexDiv);
                 item.appendChild(textDiv);
-                item.appendChild(labelsDiv);
+                item.appendChild(labelsAndCommentsDiv);
+                
                 container.appendChild(item);
             });
         }
@@ -2284,15 +2458,33 @@
             
             labeledSegments.forEach((segment, index) => {
                 const labelsList = [];
+                const commentsList = [];
+                
                 Object.entries(segment.labels).forEach(([category, labels]) => {
                     labels.forEach(labelItem => {
                         if (typeof labelItem === 'string') {
                             labelsList.push(labelItem);
                         } else {
                             labelsList.push(`${labelItem.label}(${labelItem.score} points)`);
+                            
+                            // Collect comments
+                            if (labelItem.comment) {
+                                const labelIdentifier = `${category} → ${labelItem.label}${labelItem.score ? ' (' + labelItem.score + ' points)' : ''}`;
+                                commentsList.push(`${labelIdentifier}: ${labelItem.comment}`);
+                            }
                         }
                     });
                 });
+                
+                let commentsSection = '';
+                if (commentsList.length > 0) {
+                    commentsSection = `
+                        <div style="color: #666; font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
+                            <strong>Comments:</strong><br>
+                            ${commentsList.map(comment => `<div style="margin: 4px 0; padding: 4px 6px; background-color: #f0f8ff; border-left: 3px solid #28a745; border-radius: 2px;">${escapeHtml(comment)}</div>`).join('')}
+                        </div>
+                    `;
+                }
                 
                 htmlContent += `
                     <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px;">
@@ -2303,6 +2495,7 @@
                         <div style="color: #666; font-size: 12px;">
                             <strong>Labels:</strong> ${labelsList.join(', ')}
                         </div>
+                        ${commentsSection}
                     </div>
                 `;
             });
