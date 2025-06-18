@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>教師評語產生系統</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -563,9 +564,431 @@
             font-size: 0.95rem;
         }
 
+        /* 檔案上傳區域樣式 */
+        .file-upload-section {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px dashed #9370DB;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-section:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload-section.dragover {
+            background: #e8f2ff;
+            border-color: #667eea;
+        }
+
+        .upload-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #9370DB;
+            margin-bottom: 15px;
+        }
+
+        .upload-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-btn {
+            padding: 12px 24px;
+            background: #9370DB;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-btn:hover {
+            background: #764ba2;
+            transform: translateY(-1px);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* 學生列表區域樣式 */
+        .student-list-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .student-list-section.show {
+            display: block;
+        }
+
+        .student-list-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-count {
+            font-size: 1rem;
+            color: #9370DB;
+            font-weight: normal;
+        }
+
+        /* 學生選擇器樣式 */
+        .student-selector-container {
+            margin-bottom: 25px;
+        }
+
+        .selector-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .selector-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .student-selector {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .student-selector:focus {
+            outline: none;
+            border-color: #9370DB;
+            box-shadow: 0 0 0 3px rgba(147, 112, 219, 0.1);
+        }
+
+        .student-selector option {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .student-selector option[data-status="unrated"] {
+            color: #dc3545;
+        }
+
+        .student-selector option[data-status="rated"] {
+            color: #ffc107;
+        }
+
+        .student-selector option[data-status="completed"] {
+            color: #28a745;
+        }
+
+        .student-selector option[data-status="active"] {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .selector-search {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #9370DB;
+            box-shadow: 0 0 0 3px rgba(147, 112, 219, 0.1);
+        }
+
+        /* 學生狀態統計樣式 */
+        .student-stats {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-count {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .current-student-indicator {
+            background: #f0f4ff;
+            border: 2px solid #9370DB;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .current-student-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #9370DB;
+        }
+
+        .batch-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .batch-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .batch-btn.export {
+            background: #28a745;
+            color: white;
+        }
+
+        .batch-btn.export:hover {
+            background: #218838;
+        }
+
+        .batch-btn.overview {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .batch-btn.overview:hover {
+            background: #138496;
+        }
+
+        /* 批量結果總覽樣式 */
+        .batch-overview-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .batch-overview-section.show {
+            display: block;
+        }
+
+        .overview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .overview-table th,
+        .overview-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .overview-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .overview-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .overview-table td.student-name-cell {
+            font-weight: 500;
+            color: #9370DB;
+            cursor: pointer;
+        }
+
+        .overview-table td.student-name-cell:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .score-cell {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .score-cell.scored {
+            color: #28a745;
+        }
+
+        .score-cell.unscored {
+            color: #dc3545;
+        }
+
+        /* 評語儲存按鈕樣式 */
+        .save-comment-btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .save-comment-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .save-comment-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .comment-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .comment-status.saved {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .comment-status.unsaved {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .comment-metadata {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            text-align: center;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 2rem;
+            }
+            
+            .selector-wrapper {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .student-selector {
+                min-width: auto;
+            }
+            
+            .selector-search {
+                min-width: auto;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .style-options {
@@ -599,10 +1022,104 @@
             <p>透過六個向度的評分，快速生成正向鼓勵的學生評語</p>
         </div>
 
+        <!-- 檔案上傳區域 -->
+        <div class="file-upload-section" id="fileUploadSection">
+            <h2 class="upload-title">匯入學生名單</h2>
+            <p class="upload-description">支援 CSV、XLS、XLSX 格式檔案，系統會自動讀取第一列作為學生姓名</p>
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xls,.xlsx" onchange="handleFileUpload(event)">
+                <button class="file-input-btn">選擇檔案</button>
+            </div>
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-details" id="fileDetails"></div>
+            </div>
+        </div>
+
+        <!-- 學生列表區域 -->
+        <div class="student-list-section" id="studentListSection">
+            <div class="student-list-title">
+                學生名單
+                <span class="student-count" id="studentCount">共 0 位學生</span>
+            </div>
+            
+            <!-- 學生選擇下拉選單 -->
+            <div class="student-selector-container">
+                <label for="studentSelector" class="selector-label">選擇學生進行評分：</label>
+                <div class="selector-wrapper">
+                    <select id="studentSelector" class="student-selector" onchange="handleStudentSelection(this.value)">
+                        <option value="">-- 請選擇學生 --</option>
+                    </select>
+                    <div class="selector-search">
+                        <input type="text" id="studentSearch" class="search-input" placeholder="搜尋學生姓名..." onkeyup="filterStudents(this.value)" onkeydown="handleSearchKeydown(event)">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 學生狀態統計 -->
+            <div class="student-stats" id="studentStats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-icon">🔴</span>
+                        <span class="stat-label">未評分</span>
+                        <span class="stat-count" id="unratedCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🟡</span>
+                        <span class="stat-label">已評分</span>
+                        <span class="stat-count" id="ratedCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🟢</span>
+                        <span class="stat-label">已完成</span>
+                        <span class="stat-count" id="completedCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-label">完成率</span>
+                        <span class="stat-count" id="completionRate">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="batch-actions">
+                <button class="batch-btn overview" onclick="toggleBatchOverview()">查看總覽</button>
+                <button class="batch-btn export" onclick="exportResults()">匯出結果</button>
+            </div>
+        </div>
+
+        <!-- 批量結果總覽區域 -->
+        <div class="batch-overview-section" id="batchOverviewSection">
+            <h2 class="result-title">學生評分總覽</h2>
+            <table class="overview-table" id="overviewTable">
+                <thead>
+                    <tr>
+                        <th>學生姓名</th>
+                        <th>上課態度</th>
+                        <th>考試分數</th>
+                        <th>筆記分數</th>
+                        <th>同儕關係</th>
+                        <th>自主學習</th>
+                        <th>生活常規</th>
+                        <th>評語狀態</th>
+                        <th>評語類型</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 資料將由 JavaScript 動態生成 -->
+                </tbody>
+            </table>
+        </div>
+
         <div class="input-section">
+            <!-- 當前學生指示器 -->
+            <div class="current-student-indicator" id="currentStudentIndicator" style="display: none;">
+                <div>正在評分：<span class="current-student-name" id="currentStudentName"></span></div>
+            </div>
+            
             <div class="form-group">
                 <label for="studentName">學生姓名</label>
-                <input type="text" id="studentName" class="student-name-input" placeholder="請輸入學生姓名">
+                <input type="text" id="studentName" class="student-name-input" placeholder="請輸入學生姓名或從上方學生列表選擇">
             </div>
 
             <div class="version-selection">
@@ -751,11 +1268,18 @@
                 <h2 class="result-title">生成的評語</h2>
                 <div>
                     <button class="copy-btn" onclick="copyComment()">複製評語</button>
+                    <button class="save-comment-btn" id="saveCommentBtn" onclick="saveCurrentComment()">儲存評語</button>
                     <button class="copy-btn" id="regenerateIdiomBtn" onclick="regenerateIdioms()" style="display: none; background: #fd7e14;">重新生成</button>
                     <button class="reset-btn" onclick="resetForm()">重新開始</button>
                 </div>
             </div>
             <div class="comment-text" id="commentText"></div>
+            
+            <!-- 評語狀態顯示 -->
+            <div class="comment-status" id="commentStatus" style="display: none;">
+                <span id="commentStatusText"></span>
+                <div class="comment-metadata" id="commentMetadata"></div>
+            </div>
             
             <div class="radar-chart-section">
                 <h3 class="radar-title">能力雷達圖</h3>
@@ -1037,6 +1561,22 @@
                     btn.classList.add('active');
                 }
             });
+            
+            // 如果是批量評分模式，即時保存到當前學生
+            if (currentStudentIndex >= 0 && studentList.length > 0) {
+                const studentName = studentList[currentStudentIndex];
+                if (!studentScores[studentName]) {
+                    studentScores[studentName] = {};
+                }
+                if (score !== null) {
+                    studentScores[studentName][dimensionId] = score;
+                } else {
+                    delete studentScores[studentName][dimensionId];
+                }
+                
+                // 更新學生列表顯示
+                displayStudentList();
+            }
         }
 
         // 設定具體事例
@@ -1045,6 +1585,19 @@
                 examples[dimensionId] = example.trim();
             } else {
                 delete examples[dimensionId];
+            }
+            
+            // 如果是批量評分模式，即時保存到當前學生
+            if (currentStudentIndex >= 0 && studentList.length > 0) {
+                const studentName = studentList[currentStudentIndex];
+                if (!studentExamples[studentName]) {
+                    studentExamples[studentName] = {};
+                }
+                if (example && example.trim()) {
+                    studentExamples[studentName][dimensionId] = example.trim();
+                } else {
+                    delete studentExamples[studentName][dimensionId];
+                }
             }
         }
 
@@ -1098,8 +1651,15 @@
                     break;
             }
             
+            // 設定當前生成的評語
+            currentGeneratedComment = comment;
+            currentCommentType = 'scoring';
+            
             // 顯示結果
             document.getElementById('commentText').textContent = comment;
+            
+            // 顯示未儲存狀態
+            updateCommentStatus('unsaved');
             
             // 隱藏重新生成按鈕，顯示雷達圖
             document.getElementById('regenerateIdiomBtn').style.display = 'none';
@@ -1394,6 +1954,34 @@
 
         // 重置表單
         function resetForm() {
+            // 在批量評分模式下，詢問是否要重置所有資料
+            if (studentList.length > 0) {
+                const confirmReset = confirm('這將清除所有學生的評分資料，確定要重置嗎？');
+                if (!confirmReset) return;
+                
+                // 重置批量評分資料
+                studentList = [];
+                studentScores = {};
+                studentExamples = {};
+                studentComments = {};
+                currentStudentIndex = -1;
+                currentGeneratedComment = '';
+                currentCommentType = '';
+                
+                // 隱藏相關區域
+                document.getElementById('studentListSection').classList.remove('show');
+                document.getElementById('batchOverviewSection').classList.remove('show');
+                document.getElementById('currentStudentIndicator').style.display = 'none';
+                
+                // 清空檔案上傳顯示
+                document.getElementById('fileInfo').classList.remove('show');
+                document.getElementById('fileInput').value = '';
+                
+                // 清空下拉選單和搜尋框
+                document.getElementById('studentSelector').innerHTML = '<option value="">-- 請選擇學生 --</option>';
+                document.getElementById('studentSearch').value = '';
+            }
+            
             // 清空學生姓名
             document.getElementById('studentName').value = '';
             
@@ -1409,6 +1997,13 @@
                 document.getElementById(`example-${dim.id}`).value = '';
             });
             
+            // 清空評語相關資料
+            currentGeneratedComment = '';
+            currentCommentType = '';
+            if (studentList.length === 0) {
+                studentComments = {};
+            }
+            
             // 清除雷達圖
             if (radarChart) {
                 radarChart.destroy();
@@ -1422,8 +2017,532 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // 設定拖拽上傳功能
+        function setupDragAndDrop() {
+            const uploadSection = document.getElementById('fileUploadSection');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadSection.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadSection.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadSection.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                uploadSection.classList.add('dragover');
+            }
+            
+            function unhighlight(e) {
+                uploadSection.classList.remove('dragover');
+            }
+            
+            uploadSection.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    const file = files[0];
+                    document.getElementById('fileInput').files = files;
+                    handleFileUpload({ target: { files: [file] } });
+                }
+            }
+        }
+
         // 儲存選擇的成語
         let selectedIdioms = [];
+
+        // 批量評分相關變數
+        let studentList = [];
+        let currentStudentIndex = -1;
+        let studentScores = {}; // 儲存所有學生的評分數據
+        let studentExamples = {}; // 儲存所有學生的具體事例
+        let studentComments = {}; // 儲存所有學生的評語
+        let currentGeneratedComment = ''; // 當前生成但未儲存的評語
+        let currentCommentType = ''; // 當前評語類型（scoring/idioms）
+
+        // 檔案上傳處理
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 顯示檔案資訊
+            displayFileInfo(file);
+
+            // 根據檔案類型進行解析
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExtension === 'csv') {
+                parseCSVFile(file);
+            } else if (fileExtension === 'xls' || fileExtension === 'xlsx') {
+                parseExcelFile(file);
+            } else {
+                alert('不支援的檔案格式，請選擇 CSV、XLS 或 XLSX 檔案');
+                return;
+            }
+        }
+
+        // 顯示檔案資訊
+        function displayFileInfo(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileDetails = document.getElementById('fileDetails');
+            
+            fileName.textContent = file.name;
+            fileDetails.textContent = `檔案大小: ${(file.size / 1024).toFixed(2)} KB | 檔案類型: ${file.type || '未知'}`;
+            fileInfo.classList.add('show');
+        }
+
+        // 解析CSV檔案
+        function parseCSVFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                const students = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        const columns = line.split(',');
+                        const studentName = columns[0].trim().replace(/"/g, ''); // 移除可能的引號
+                        if (studentName && studentName !== '' && index < 100) { // 限制最多100個學生
+                            students.push(studentName);
+                        }
+                    }
+                });
+                
+                if (students.length > 0) {
+                    loadStudentList(students);
+                } else {
+                    alert('未在檔案中找到有效的學生姓名');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // 解析Excel檔案
+        function parseExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 讀取第一個工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 轉換為JSON格式
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    const students = [];
+                    jsonData.forEach((row, index) => {
+                        if (row[0] && typeof row[0] === 'string' && row[0].trim() !== '' && index < 100) {
+                            students.push(row[0].trim());
+                        }
+                    });
+                    
+                    if (students.length > 0) {
+                        loadStudentList(students);
+                    } else {
+                        alert('未在檔案中找到有效的學生姓名');
+                    }
+                } catch (error) {
+                    console.error('解析Excel檔案時發生錯誤:', error);
+                    alert('解析檔案時發生錯誤，請確認檔案格式正確');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 載入學生名單
+        function loadStudentList(students) {
+            studentList = [...new Set(students)]; // 去除重複項目
+            studentScores = {};
+            studentExamples = {};
+            studentComments = {};
+            currentStudentIndex = -1;
+            currentGeneratedComment = '';
+            currentCommentType = '';
+            
+            // 初始化所有學生的評分資料
+            studentList.forEach(student => {
+                studentScores[student] = {};
+                studentExamples[student] = {};
+                studentComments[student] = null;
+            });
+            
+            displayStudentList();
+            
+            // 清除搜尋輸入框
+            document.getElementById('studentSearch').value = '';
+            
+            // 顯示學生列表區域
+            document.getElementById('studentListSection').classList.add('show');
+            
+            // 滾動到學生列表
+            document.getElementById('studentListSection').scrollIntoView({ behavior: 'smooth' });
+            
+            alert(`成功匯入 ${studentList.length} 位學生的名單！`);
+        }
+
+        // 顯示學生列表
+        function displayStudentList() {
+            const studentSelector = document.getElementById('studentSelector');
+            const studentCount = document.getElementById('studentCount');
+            
+            studentCount.textContent = `共 ${studentList.length} 位學生`;
+            
+            // 清空並重新填充下拉選單
+            studentSelector.innerHTML = '<option value="">-- 請選擇學生 --</option>';
+            
+            studentList.forEach((student, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                
+                const isScored = Object.keys(studentScores[student]).length > 0;
+                const hasComment = studentComments[student] !== null;
+                const isActive = index === currentStudentIndex;
+                
+                let statusIcon = '';
+                let statusText = '';
+                let dataStatus = '';
+                
+                if (isActive) {
+                    statusIcon = '🔵';
+                    statusText = '評分中';
+                    dataStatus = 'active';
+                } else if (hasComment) {
+                    statusIcon = '🟢';
+                    statusText = '已完成';
+                    dataStatus = 'completed';
+                } else if (isScored) {
+                    statusIcon = '🟡';
+                    statusText = '已評分';
+                    dataStatus = 'rated';
+                } else {
+                    statusIcon = '🔴';
+                    statusText = '未評分';
+                    dataStatus = 'unrated';
+                }
+                
+                option.textContent = `${statusIcon} ${student} (${statusText})`;
+                option.setAttribute('data-status', dataStatus);
+                option.setAttribute('data-name', student.toLowerCase());
+                
+                if (isActive) {
+                    option.selected = true;
+                }
+                
+                studentSelector.appendChild(option);
+            });
+            
+            // 更新統計資訊
+            updateStudentStats();
+        }
+
+        // 更新學生統計資訊
+        function updateStudentStats() {
+            let unratedCount = 0;
+            let ratedCount = 0;
+            let completedCount = 0;
+            
+            studentList.forEach(student => {
+                const isScored = Object.keys(studentScores[student]).length > 0;
+                const hasComment = studentComments[student] !== null;
+                
+                if (hasComment) {
+                    completedCount++;
+                } else if (isScored) {
+                    ratedCount++;
+                } else {
+                    unratedCount++;
+                }
+            });
+            
+            const completionRate = studentList.length > 0 ? 
+                Math.round((completedCount / studentList.length) * 100) : 0;
+            
+            document.getElementById('unratedCount').textContent = unratedCount;
+            document.getElementById('ratedCount').textContent = ratedCount;
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('completionRate').textContent = `${completionRate}%`;
+        }
+
+        // 處理下拉選單學生選擇
+        function handleStudentSelection(selectedValue) {
+            if (selectedValue === '') {
+                return;
+            }
+            
+            const index = parseInt(selectedValue);
+            selectStudent(index);
+        }
+
+        // 處理搜尋輸入框鍵盤事件
+        function handleSearchKeydown(event) {
+            if (event.key === 'Enter') {
+                const searchTerm = event.target.value.toLowerCase().trim();
+                if (searchTerm) {
+                    // 尋找完全匹配的學生
+                    const exactMatch = studentList.find(student => 
+                        student.toLowerCase() === searchTerm
+                    );
+                    
+                    if (exactMatch) {
+                        const index = studentList.indexOf(exactMatch);
+                        selectStudent(index);
+                        event.target.value = '';
+                        filterStudents('');
+                    } else {
+                        // 尋找部分匹配的第一個學生
+                        const partialMatch = studentList.find(student => 
+                            student.toLowerCase().includes(searchTerm)
+                        );
+                        
+                        if (partialMatch) {
+                            const index = studentList.indexOf(partialMatch);
+                            selectStudent(index);
+                            event.target.value = '';
+                            filterStudents('');
+                        }
+                    }
+                }
+            } else if (event.key === 'Escape') {
+                event.target.value = '';
+                filterStudents('');
+                event.target.blur();
+            }
+        }
+
+        // 學生搜尋過濾
+        function filterStudents(searchTerm) {
+            const studentSelector = document.getElementById('studentSelector');
+            const options = studentSelector.querySelectorAll('option');
+            
+            searchTerm = searchTerm.toLowerCase().trim();
+            
+            options.forEach(option => {
+                if (option.value === '') {
+                    option.style.display = 'block';
+                    return;
+                }
+                
+                const studentName = option.getAttribute('data-name');
+                if (studentName && studentName.includes(searchTerm)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            // 如果搜尋結果只有一個學生，自動選擇
+            const visibleOptions = Array.from(options).filter(option => 
+                option.value !== '' && option.style.display !== 'none'
+            );
+            
+            if (visibleOptions.length === 1 && searchTerm.length > 0) {
+                const exactMatch = visibleOptions.find(option => 
+                    option.getAttribute('data-name') === searchTerm
+                );
+                if (exactMatch) {
+                    studentSelector.value = exactMatch.value;
+                    handleStudentSelection(exactMatch.value);
+                    document.getElementById('studentSearch').value = '';
+                    filterStudents(''); // 清除篩選，顯示所有選項
+                }
+            }
+        }
+
+        // 選擇學生進行評分
+        function selectStudent(index) {
+            if (index < 0 || index >= studentList.length) return;
+            
+            // 儲存當前學生的評分資料
+            if (currentStudentIndex >= 0) {
+                saveCurrentStudentData();
+            }
+            
+            // 切換到新學生
+            currentStudentIndex = index;
+            const studentName = studentList[index];
+            
+            // 更新界面
+            document.getElementById('studentName').value = studentName;
+            document.getElementById('currentStudentName').textContent = studentName;
+            document.getElementById('currentStudentIndicator').style.display = 'block';
+            
+            // 載入學生的評分資料
+            loadStudentData(studentName);
+            
+            // 更新學生列表顯示
+            displayStudentList();
+            
+            // 更新下拉選單選擇
+            document.getElementById('studentSelector').value = index;
+            
+            // 滾動到評分區域
+            document.querySelector('.input-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 儲存當前學生的評分資料
+        function saveCurrentStudentData() {
+            if (currentStudentIndex >= 0) {
+                const studentName = studentList[currentStudentIndex];
+                studentScores[studentName] = { ...scores };
+                studentExamples[studentName] = { ...examples };
+            }
+        }
+
+        // 載入學生的評分資料
+        function loadStudentData(studentName) {
+            // 清空當前評分
+            scores = {};
+            examples = {};
+            currentGeneratedComment = '';
+            currentCommentType = '';
+            
+            // 載入學生的評分資料
+            if (studentScores[studentName]) {
+                scores = { ...studentScores[studentName] };
+            }
+            if (studentExamples[studentName]) {
+                examples = { ...studentExamples[studentName] };
+            }
+            
+            // 更新界面
+            dimensions.forEach(dim => {
+                const score = scores[dim.id];
+                if (score !== undefined) {
+                    setScore(dim.id, score);
+                } else {
+                    setScore(dim.id, null);
+                }
+                
+                const example = examples[dim.id] || '';
+                document.getElementById(`example-${dim.id}`).value = example;
+            });
+            
+            // 載入已儲存的評語
+            loadSavedComment(studentName);
+        }
+
+        // 載入已儲存的評語
+        function loadSavedComment(studentName) {
+            const savedComment = studentComments[studentName];
+            const resultSection = document.getElementById('resultSection');
+            const commentStatus = document.getElementById('commentStatus');
+            
+            if (savedComment) {
+                // 顯示已儲存的評語
+                document.getElementById('commentText').textContent = savedComment.content;
+                
+                // 顯示評語狀態
+                updateCommentStatus('saved', savedComment);
+                
+                // 顯示結果區域
+                if (savedComment.type === 'idioms') {
+                    document.getElementById('regenerateIdiomBtn').style.display = 'inline-block';
+                    document.querySelector('.radar-chart-section').style.display = 'none';
+                } else {
+                    document.getElementById('regenerateIdiomBtn').style.display = 'none';
+                    document.querySelector('.radar-chart-section').style.display = 'block';
+                    generateRadarChart();
+                }
+                
+                resultSection.classList.add('show');
+            } else {
+                // 隱藏結果區域
+                resultSection.classList.remove('show');
+                commentStatus.style.display = 'none';
+            }
+        }
+
+        // 更新評語狀態顯示
+        function updateCommentStatus(status, commentData = null) {
+            const commentStatus = document.getElementById('commentStatus');
+            const commentStatusText = document.getElementById('commentStatusText');
+            const commentMetadata = document.getElementById('commentMetadata');
+            const saveBtn = document.getElementById('saveCommentBtn');
+            
+            commentStatus.style.display = 'block';
+            commentStatus.className = 'comment-status ' + status;
+            
+            if (status === 'saved' && commentData) {
+                commentStatusText.textContent = '評語已儲存';
+                const typeText = commentData.type === 'idioms' ? '四字成語版本' : '六向度評分版本';
+                const timeText = new Date(commentData.timestamp).toLocaleString('zh-TW');
+                commentMetadata.textContent = `類型：${typeText} | 儲存時間：${timeText}`;
+                saveBtn.disabled = true;
+                saveBtn.textContent = '已儲存';
+            } else if (status === 'unsaved') {
+                commentStatusText.textContent = '評語已生成，但尚未儲存';
+                commentMetadata.textContent = '請點擊「儲存評語」按鈕以保存到學生資料中';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存評語';
+            }
+        }
+
+        // 儲存當前評語
+        function saveCurrentComment() {
+            if (!currentGeneratedComment || !currentCommentType) {
+                alert('沒有可儲存的評語');
+                return;
+            }
+            
+            const studentName = document.getElementById('studentName').value.trim();
+            if (!studentName) {
+                alert('請先選擇或輸入學生姓名');
+                return;
+            }
+            
+            // 如果是批量評分模式，確保學生在列表中
+            if (studentList.length > 0 && !studentList.includes(studentName)) {
+                alert('該學生不在已匯入的名單中');
+                return;
+            }
+            
+            // 儲存評語
+            const commentData = {
+                content: currentGeneratedComment,
+                type: currentCommentType,
+                timestamp: new Date().toISOString(),
+                studentName: studentName
+            };
+            
+            // 初始化學生資料（如果是單獨評分）
+            if (studentList.length === 0) {
+                if (!studentComments[studentName]) {
+                    studentComments[studentName] = null;
+                }
+            }
+            
+            studentComments[studentName] = commentData;
+            
+            // 更新狀態顯示
+            updateCommentStatus('saved', commentData);
+            
+            // 更新學生列表顯示（如果在批量模式）
+            if (studentList.length > 0) {
+                displayStudentList();
+            } else {
+                // 單獨評分模式也更新統計
+                updateStudentStats();
+            }
+            
+            alert('評語已成功儲存！');
+        }
 
         // 版本切換功能
         function switchVersion() {
@@ -1472,8 +2591,15 @@
             // 生成最終評語
             const comment = generateFinalIdiomComment(selectedIdioms);
             
+            // 設定當前生成的評語
+            currentGeneratedComment = comment;
+            currentCommentType = 'idioms';
+            
             // 顯示結果
             document.getElementById('commentText').textContent = comment;
+            
+            // 顯示未儲存狀態
+            updateCommentStatus('unsaved');
             
             // 顯示重新生成按鈕，隱藏雷達圖
             document.getElementById('regenerateIdiomBtn').style.display = 'inline-block';
@@ -1493,6 +2619,178 @@
             return idioms.join('、');
         }
 
+        // 切換批量總覽顯示
+        function toggleBatchOverview() {
+            const overviewSection = document.getElementById('batchOverviewSection');
+            const isVisible = overviewSection.classList.contains('show');
+            
+            if (isVisible) {
+                overviewSection.classList.remove('show');
+            } else {
+                // 儲存當前學生的評分資料
+                saveCurrentStudentData();
+                
+                // 更新總覽表格
+                updateBatchOverview();
+                
+                // 顯示總覽
+                overviewSection.classList.add('show');
+                overviewSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 更新批量總覽表格
+        function updateBatchOverview() {
+            const tableBody = document.querySelector('#overviewTable tbody');
+            tableBody.innerHTML = '';
+            
+            studentList.forEach((student, index) => {
+                const row = document.createElement('tr');
+                const studentData = studentScores[student] || {};
+                const commentData = studentComments[student];
+                
+                // 計算已評分的向度數量
+                const scoredDimensions = Object.keys(studentData).length;
+                const totalDimensions = dimensions.length;
+                
+                // 評語狀態
+                let commentStatus = '-';
+                let commentType = '-';
+                if (commentData) {
+                    commentStatus = '已儲存';
+                    commentType = commentData.type === 'idioms' ? '四字成語' : '六向度評分';
+                } else if (scoredDimensions > 0) {
+                    commentStatus = '可生成';
+                }
+                
+                row.innerHTML = `
+                    <td class="student-name-cell" onclick="selectStudent(${index})">${student}</td>
+                    <td class="score-cell ${studentData.attitude !== undefined ? 'scored' : 'unscored'}">${studentData.attitude !== undefined ? studentData.attitude : '-'}</td>
+                    <td class="score-cell ${studentData.exam !== undefined ? 'scored' : 'unscored'}">${studentData.exam !== undefined ? studentData.exam : '-'}</td>
+                    <td class="score-cell ${studentData.notes !== undefined ? 'scored' : 'unscored'}">${studentData.notes !== undefined ? studentData.notes : '-'}</td>
+                    <td class="score-cell ${studentData.peer !== undefined ? 'scored' : 'unscored'}">${studentData.peer !== undefined ? studentData.peer : '-'}</td>
+                    <td class="score-cell ${studentData.selflearn !== undefined ? 'scored' : 'unscored'}">${studentData.selflearn !== undefined ? studentData.selflearn : '-'}</td>
+                    <td class="score-cell ${studentData.attendance !== undefined ? 'scored' : 'unscored'}">${studentData.attendance !== undefined ? studentData.attendance : '-'}</td>
+                    <td class="score-cell ${commentData ? 'scored' : 'unscored'}">${commentStatus}</td>
+                    <td class="score-cell ${commentData ? 'scored' : 'unscored'}">${commentType}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 匯出結果
+        function exportResults() {
+            if (studentList.length === 0) {
+                alert('沒有學生資料可以匯出');
+                return;
+            }
+            
+            // 儲存當前學生的評分資料
+            saveCurrentStudentData();
+            
+            // 準備匯出資料
+            const exportData = [];
+            
+            // 添加標題行
+            const headers = ['學生姓名', '上課態度', '考試分數', '筆記分數', '同儕關係', '自主學習', '生活常規', '已評分向度', '評語類型', '儲存的評語', '生成時間'];
+            exportData.push(headers);
+            
+            // 添加學生資料
+            studentList.forEach(student => {
+                const studentData = studentScores[student] || {};
+                const commentData = studentComments[student];
+                
+                const scoredDimensions = Object.keys(studentData).length;
+                const totalDimensions = dimensions.length;
+                
+                // 使用已儲存的評語，如果沒有則為空
+                let comment = '';
+                let commentType = '';
+                let saveTime = '';
+                
+                if (commentData) {
+                    comment = commentData.content;
+                    commentType = commentData.type === 'idioms' ? '四字成語版本' : '六向度評分版本';
+                    saveTime = new Date(commentData.timestamp).toLocaleString('zh-TW');
+                }
+                
+                const row = [
+                    student,
+                    studentData.attitude !== undefined ? studentData.attitude : '',
+                    studentData.exam !== undefined ? studentData.exam : '',
+                    studentData.notes !== undefined ? studentData.notes : '',
+                    studentData.peer !== undefined ? studentData.peer : '',
+                    studentData.selflearn !== undefined ? studentData.selflearn : '',
+                    studentData.attendance !== undefined ? studentData.attendance : '',
+                    `${scoredDimensions}/${totalDimensions}`,
+                    commentType,
+                    comment,
+                    saveTime
+                ];
+                
+                exportData.push(row);
+            });
+            
+            // 轉換為CSV格式並下載
+            downloadCSV(exportData, '學生評分結果.csv');
+        }
+
+        // 生成學生評語
+        function generateStudentComment(studentName, studentData, studentExampleData) {
+            if (Object.keys(studentData).length === 0) return '';
+            
+            // 模擬生成評語的過程
+            const selectedTone = 'encouraging'; // 預設使用鼓勵語氣
+            const selectedStyle = 'style1'; // 預設使用風格一
+            
+            // 將有分數的向度按分數高低排序
+            const sortedDimensions = Object.entries(studentData)
+                .map(([dimId, score]) => {
+                    const dim = dimensions.find(d => d.id === dimId);
+                    let comment = dim.comments[selectedTone][score];
+                    
+                    // 處理具體事例的插入
+                    if (studentExampleData[dimId]) {
+                        comment = comment.replace('{EXAMPLE}', `，如${studentExampleData[dimId]}`);
+                    } else {
+                        comment = comment.replace('{EXAMPLE}', '');
+                    }
+                    
+                    return {
+                        id: dimId,
+                        name: dim.name,
+                        score: score,
+                        comment: comment
+                    };
+                })
+                .sort((a, b) => b.score - a.score);
+            
+            // 使用風格一生成評語
+            return generateStyle1(studentName, sortedDimensions, selectedTone);
+        }
+
+        // 下載CSV檔案
+        function downloadCSV(data, filename) {
+            const csvContent = data.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('\n');
+            
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert('評分結果已成功匯出！');
+        }
+
         // 重新生成成語（保持相同類別，但隨機選擇不同成語）
         function regenerateIdioms() {
             const checkboxes = document.querySelectorAll('#idiomsSection input[type="checkbox"]:checked');
@@ -1509,6 +2807,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeEvaluationItems();
             switchVersion();
+            setupDragAndDrop();
             
             // 為每個向度設定預設未評分狀態
             dimensions.forEach(dim => {
