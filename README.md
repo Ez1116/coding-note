@@ -2,6 +2,8 @@
 
 This repository contains interactive web-based tools, visualizations for data analysis and statistical concepts, educational survey automation scripts, and research tools, primarily designed in Traditional Chinese.
 
+- Page url: https://ez1116.github.io/coding-note/
+
 ## Files Overview
 
 ### 📊 Basic statistics.html
