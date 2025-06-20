@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>露營日記系統 - 像素風格</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: #90b090;
+            min-height: 100vh;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+            margin-bottom: 30px;
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+        
+        /* 像素風格邊框 */
+        .pixel-border {
+            border: 4px solid #000;
+            box-shadow: 
+                0 4px 0 0 #000,
+                4px 0 0 0 #000,
+                4px 4px 0 0 #000,
+                inset -4px -4px 0 0 rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        /* 主場景 - 寶可夢風格 */
+        .main-scene {
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 60%, #90b090 100%);
+            padding: 0;
+            margin-bottom: 30px;
+            height: 320px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+        
+        /* 天氣效果樣式 */
+        .main-scene.weather-sunny {
+            background: linear-gradient(to bottom, #FFA233 0%, #FFB84D 60%, #90b090 100%);
+        }
+        
+        .main-scene.weather-rainy {
+            background: linear-gradient(to bottom, #696969 0%, #808080 60%, #90b090 100%);
+        }
+        
+        /* 雨滴效果樣式 */
+        #rain {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        #rain div {
+            position: absolute;
+            height: 12px;
+            width: 2px;
+            background: rgba(255,255,255,.6);
+        }
+        
+        #rain .drop {
+            height: 2px;
+        }
+        
+        #rain .drop:before, #rain .drop:after {
+            content: "";
+            display: block;
+            position: absolute;
+            bottom: 100%;
+            height: 2px;
+            width: 2px;
+            background: rgba(255,255,255,.6);
+        }
+        
+        #rain .drop:before {
+            right: 100%;
+        }
+        
+        #rain .drop:after {
+            left: 100%;
+        }
+        
+        .pixel-grass {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 120px;
+            background: #4CAF50;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 8px, #45a049 8px, #45a049 16px),
+                repeating-linear-gradient(0deg, transparent, transparent 8px, #45a049 8px, #45a049 16px);
+        }
+        
+        /* 像素帳篷 */
+        .pixel-tent {
+            position: absolute;
+            bottom: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 120px;
+        }
+        
+        /* Pixel art tent using box-shadow */
+        .tent-pixelart {
+            width: 2px;
+            height: 2px;
+            box-shadow:
+                /* Tent outline - top peak */
+                14px 0px 0 0 #000000, 16px 0px 0 0 #000000, 18px 0px 0 0 #000000, 20px 0px 0 0 #000000,
+                12px 2px 0 0 #000000, 22px 2px 0 0 #000000,
+                10px 4px 0 0 #000000, 24px 4px 0 0 #000000,
+                8px 6px 0 0 #000000, 26px 6px 0 0 #000000,
+                6px 8px 0 0 #000000, 28px 8px 0 0 #000000,
+                4px 10px 0 0 #000000, 30px 10px 0 0 #000000,
+                2px 12px 0 0 #000000, 32px 12px 0 0 #000000,
+                0px 14px 0 0 #000000, 34px 14px 0 0 #000000,
+                /* Base line */
+                0px 16px 0 0 #000000, 2px 16px 0 0 #000000, 4px 16px 0 0 #000000, 6px 16px 0 0 #000000, 8px 16px 0 0 #000000, 10px 16px 0 0 #000000, 12px 16px 0 0 #000000, 14px 16px 0 0 #000000, 16px 16px 0 0 #000000, 18px 16px 0 0 #000000, 20px 16px 0 0 #000000, 22px 16px 0 0 #000000, 24px 16px 0 0 #000000, 26px 16px 0 0 #000000, 28px 16px 0 0 #000000, 30px 16px 0 0 #000000, 32px 16px 0 0 #000000, 34px 16px 0 0 #000000,
+                
+                /* Left side tent canvas */
+                14px 2px 0 0 #f0f0dc, 16px 2px 0 0 #f0f0dc,
+                12px 4px 0 0 #f0f0dc, 14px 4px 0 0 #f0f0dc, 16px 4px 0 0 #f0f0dc,
+                10px 6px 0 0 #f0f0dc, 12px 6px 0 0 #f0f0dc, 14px 6px 0 0 #f0f0dc, 16px 6px 0 0 #f0f0dc,
+                8px 8px 0 0 #f0f0dc, 10px 8px 0 0 #f0f0dc, 12px 8px 0 0 #f0f0dc, 14px 8px 0 0 #f0f0dc, 16px 8px 0 0 #f0f0dc,
+                6px 10px 0 0 #f0f0dc, 8px 10px 0 0 #f0f0dc, 10px 10px 0 0 #f0f0dc, 12px 10px 0 0 #f0f0dc, 14px 10px 0 0 #f0f0dc, 16px 10px 0 0 #f0f0dc,
+                4px 12px 0 0 #f0f0dc, 6px 12px 0 0 #f0f0dc, 8px 12px 0 0 #f0f0dc, 10px 12px 0 0 #f0f0dc, 12px 12px 0 0 #f0f0dc, 14px 12px 0 0 #f0f0dc, 16px 12px 0 0 #f0f0dc,
+                2px 14px 0 0 #f0f0dc, 4px 14px 0 0 #f0f0dc, 6px 14px 0 0 #f0f0dc, 8px 14px 0 0 #f0f0dc, 10px 14px 0 0 #f0f0dc, 12px 14px 0 0 #f0f0dc, 14px 14px 0 0 #f0f0dc, 16px 14px 0 0 #f0f0dc,
+                
+                /* Right side tent canvas - darker */
+                18px 2px 0 0 #d8d8b8, 20px 2px 0 0 #d8d8b8,
+                18px 4px 0 0 #d8d8b8, 20px 4px 0 0 #d8d8b8, 22px 4px 0 0 #d8d8b8,
+                18px 6px 0 0 #d8d8b8, 20px 6px 0 0 #d8d8b8, 22px 6px 0 0 #d8d8b8, 24px 6px 0 0 #d8d8b8,
+                18px 8px 0 0 #d8d8b8, 20px 8px 0 0 #d8d8b8, 22px 8px 0 0 #d8d8b8, 24px 8px 0 0 #d8d8b8, 26px 8px 0 0 #d8d8b8,
+                18px 10px 0 0 #d8d8b8, 20px 10px 0 0 #d8d8b8, 22px 10px 0 0 #d8d8b8, 24px 10px 0 0 #d8d8b8, 26px 10px 0 0 #d8d8b8, 28px 10px 0 0 #d8d8b8,
+                18px 12px 0 0 #d8d8b8, 20px 12px 0 0 #d8d8b8, 22px 12px 0 0 #d8d8b8, 24px 12px 0 0 #d8d8b8, 26px 12px 0 0 #d8d8b8, 28px 12px 0 0 #d8d8b8, 30px 12px 0 0 #d8d8b8,
+                18px 14px 0 0 #d8d8b8, 20px 14px 0 0 #d8d8b8, 22px 14px 0 0 #d8d8b8, 24px 14px 0 0 #d8d8b8, 26px 14px 0 0 #d8d8b8, 28px 14px 0 0 #d8d8b8, 30px 14px 0 0 #d8d8b8, 32px 14px 0 0 #d8d8b8,
+                
+                /* Center pole */
+                16px 2px 0 0 #000000, 16px 4px 0 0 #000000, 16px 6px 0 0 #000000, 16px 8px 0 0 #000000, 16px 10px 0 0 #000000, 16px 12px 0 0 #000000, 16px 14px 0 0 #000000,
+                18px 2px 0 0 #000000, 18px 4px 0 0 #000000, 18px 6px 0 0 #000000, 18px 8px 0 0 #000000, 18px 10px 0 0 #000000, 18px 12px 0 0 #000000, 18px 14px 0 0 #000000,
+                
+                /* Door opening */
+                10px 12px 0 0 #2a2a2a, 12px 12px 0 0 #2a2a2a, 14px 12px 0 0 #2a2a2a,
+                8px 14px 0 0 #2a2a2a, 10px 14px 0 0 #2a2a2a, 12px 14px 0 0 #2a2a2a, 14px 14px 0 0 #2a2a2a,
+                
+                /* Red flag on top */
+                16px -4px 0 0 #000000, 18px -4px 0 0 #000000,
+                16px -2px 0 0 #000000, 18px -2px 0 0 #ff0000, 20px -2px 0 0 #ff0000, 22px -2px 0 0 #ff0000,
+                18px 0px 0 0 #ff0000, 20px 0px 0 0 #ff0000;
+            
+            transform: scale(4);
+            transform-origin: top left;
+        }
+        
+        /* 新的像素角色 - yun 和 ez */
+        .pixel-trainer {
+            position: absolute;
+            bottom: 110px;
+        }
+        
+        .yun-character {
+            left: calc(50% - 60px);
+        }
+        
+        .ez-character {
+            left: calc(50% + 30px);
+        }
+        
+        /* Yun 角色樣式 */
+        .yun-pixelart {
+            height: 2px;
+            width: 2px;
+            box-shadow: 
+                14px 6px 0 0 #000000, 16px 6px 0 0 #000000, 18px 6px 0 0 #000000, 20px 6px 0 0 #000000, 22px 6px 0 0 #000000, 24px 6px 0 0 #000000, 
+                12px 8px 0 0 #000000, 14px 8px 0 0 #17110b, 16px 8px 0 0 #17110b, 18px 8px 0 0 #17110b, 20px 8px 0 0 #17110b, 22px 8px 0 0 #17110b, 24px 8px 0 0 #17110b, 26px 8px 0 0 #000000, 
+                10px 10px 0 0 #000000, 12px 10px 0 0 #17110b, 14px 10px 0 0 #bba9dd, 16px 10px 0 0 #17110b, 18px 10px 0 0 #17110b, 20px 10px 0 0 #17110b, 22px 10px 0 0 #17110b, 24px 10px 0 0 #bba9dd, 26px 10px 0 0 #17110b, 28px 10px 0 0 #000000, 
+                10px 12px 0 0 #000000, 12px 12px 0 0 #17110b, 14px 12px 0 0 #17110b, 16px 12px 0 0 #17110b, 18px 12px 0 0 #17110b, 20px 12px 0 0 #17110b, 22px 12px 0 0 #000000, 24px 12px 0 0 #17110b, 26px 12px 0 0 #17110b, 28px 12px 0 0 #000000, 
+                8px 14px 0 0 #000000, 10px 14px 0 0 #17110b, 12px 14px 0 0 #17110b, 14px 14px 0 0 #000000, 16px 14px 0 0 #ebc9bd, 18px 14px 0 0 #000000, 20px 14px 0 0 #000000, 22px 14px 0 0 #ebc9bd, 24px 14px 0 0 #000000, 26px 14px 0 0 #17110b, 28px 14px 0 0 #17110b, 30px 14px 0 0 #000000, 
+                8px 16px 0 0 #000000, 10px 16px 0 0 #17110b, 12px 16px 0 0 #000000, 14px 16px 0 0 #ebc9bd, 16px 16px 0 0 #ebc9bd, 18px 16px 0 0 #ebc9bd, 20px 16px 0 0 #ebc9bd, 22px 16px 0 0 #ebc9bd, 24px 16px 0 0 #ebc9bd, 26px 16px 0 0 #000000, 28px 16px 0 0 #17110b, 30px 16px 0 0 #000000, 
+                8px 18px 0 0 #000000, 10px 18px 0 0 #000000, 12px 18px 0 0 #ebc9bd, 14px 18px 0 0 #ebc9bd, 16px 18px 0 0 #000000, 18px 18px 0 0 #ebc9bd, 20px 18px 0 0 #ebc9bd, 22px 18px 0 0 #000000, 24px 18px 0 0 #ebc9bd, 26px 18px 0 0 #ebc9bd, 28px 18px 0 0 #000000, 30px 18px 0 0 #000000, 
+                8px 20px 0 0 #000000, 10px 20px 0 0 #000000, 12px 20px 0 0 #ebc9bd, 14px 20px 0 0 #ebc9bd, 16px 20px 0 0 #000000, 18px 20px 0 0 #ebc9bd, 20px 20px 0 0 #ebc9bd, 22px 20px 0 0 #000000, 24px 20px 0 0 #ebc9bd, 26px 20px 0 0 #ebc9bd, 28px 20px 0 0 #000000, 30px 20px 0 0 #000000, 
+                8px 22px 0 0 #000000, 10px 22px 0 0 #17110b, 12px 22px 0 0 #000000, 14px 22px 0 0 #ebc9bd, 16px 22px 0 0 #ebc9bd, 18px 22px 0 0 #d6979d, 20px 22px 0 0 #d6979d, 22px 22px 0 0 #ebc9bd, 24px 22px 0 0 #ebc9bd, 26px 22px 0 0 #000000, 28px 22px 0 0 #17110b, 30px 22px 0 0 #000000, 
+                8px 24px 0 0 #000000, 10px 24px 0 0 #000000, 12px 24px 0 0 #17110b, 14px 24px 0 0 #000000, 16px 24px 0 0 #000000, 18px 24px 0 0 #000000, 20px 24px 0 0 #000000, 22px 24px 0 0 #000000, 24px 24px 0 0 #000000, 26px 24px 0 0 #17110b, 28px 24px 0 0 #000000, 30px 24px 0 0 #000000, 
+                6px 26px 0 0 #000000, 8px 26px 0 0 #000000, 10px 26px 0 0 #ebc9bd, 12px 26px 0 0 #000000, 14px 26px 0 0 #bba9dd, 16px 26px 0 0 #ffffff, 18px 26px 0 0 #ffffff, 20px 26px 0 0 #ffffff, 22px 26px 0 0 #ffffff, 24px 26px 0 0 #bba9dd, 26px 26px 0 0 #000000, 28px 26px 0 0 #ebc9bd, 30px 26px 0 0 #000000, 32px 26px 0 0 #000000, 
+                6px 28px 0 0 #000000, 8px 28px 0 0 #ebc9bd, 10px 28px 0 0 #ebc9bd, 12px 28px 0 0 #000000, 14px 28px 0 0 #bba9dd, 16px 28px 0 0 #bba9dd, 18px 28px 0 0 #bba9dd, 20px 28px 0 0 #bba9dd, 22px 28px 0 0 #bba9dd, 24px 28px 0 0 #bba9dd, 26px 28px 0 0 #000000, 28px 28px 0 0 #ebc9bd, 30px 28px 0 0 #ebc9bd, 32px 28px 0 0 #000000, 
+                8px 30px 0 0 #000000, 10px 30px 0 0 #000000, 12px 30px 0 0 #bba9dd, 14px 30px 0 0 #bba9dd, 16px 30px 0 0 #bba9dd, 18px 30px 0 0 #bba9dd, 20px 30px 0 0 #bba9dd, 22px 30px 0 0 #bba9dd, 24px 30px 0 0 #bba9dd, 26px 30px 0 0 #bba9dd, 28px 30px 0 0 #000000, 30px 30px 0 0 #000000, 
+                10px 32px 0 0 #000000, 12px 32px 0 0 #bba9dd, 14px 32px 0 0 #bba9dd, 16px 32px 0 0 #bba9dd, 18px 32px 0 0 #bba9dd, 20px 32px 0 0 #bba9dd, 22px 32px 0 0 #bba9dd, 24px 32px 0 0 #bba9dd, 26px 32px 0 0 #bba9dd, 28px 32px 0 0 #000000, 
+                12px 34px 0 0 #000000, 14px 34px 0 0 #bba9dd, 16px 34px 0 0 #bba9dd, 18px 34px 0 0 #bba9dd, 20px 34px 0 0 #bba9dd, 22px 34px 0 0 #bba9dd, 24px 34px 0 0 #bba9dd, 26px 34px 0 0 #000000, 
+                14px 36px 0 0 #000000, 16px 36px 0 0 #000000, 18px 36px 0 0 #000000, 20px 36px 0 0 #000000, 22px 36px 0 0 #000000, 24px 36px 0 0 #000000;
+            transform: scale(1.8);
+            transform-origin: top left;
+        }
+        
+        /* Ez 角色樣式 */
+        .ez-pixelart {
+            width: 3px;
+            height: 3px;
+            background-color: #000;
+            box-shadow:
+                0 3px #000, 0 6px #000, 0 9px #000, 0 12px #000, 0 15px #000, 0 18px #000, 0 21px #000, 0 24px #000, 0 27px #000, 0 30px #000, 0 33px #000,
+                3px 33px #000, 6px 36px #000, 9px 36px #000, 12px 36px #000, 15px 36px #000, 18px 36px #000, 21px 36px #000, 24px 36px #000, 27px 36px #000,
+                30px 33px #000, 33px 33px #000, 33px 30px #000, 33px 27px #000, 36px 24px #000, 36px 21px #000, 33px 18px #000, 33px 15px #000, 33px 12px #000, 33px 9px #000, 33px 6px #000, 33px 3px #000,
+                30px 0px #000, 27px 0px #000, 27px -3px #000, 24px -3px #000, 21px -3px #000, 18px -6px #000, 15px -6px #000, 12px -6px #000, 9px -6px #000, 6px -6px #000, 3px -3px #000,
+                3px 0 #323232, 3px 3px #323232, 3px 6px #323232, 3px 9px #323232, 6px -3px #323232, 6px 0 #323232, 6px 3px #323232, 6px 6px #323232,
+                9px -3px #323232, 9px 0 #323232, 9px 3px #323232, 9px 6px #323232, 12px -3px #323232, 12px 0 #323232, 12px 3px #323232, 12px 6px #323232, 12px 9px #323232,
+                15px -3px #323232, 15px 0 #323232, 15px 3px #323232, 15px 6px #323232, 15px 9px #323232, 15px 12px #323232, 18px -3px #323232, 18px 0 #323232, 18px 3px #323232, 18px 6px #323232,
+                21px 0 #323232, 21px 3px #323232, 21px 6px #323232, 24px 0 #323232, 24px 3px #323232, 27px 3px #323232, 27px 6px #323232, 27px 9px #323232,
+                30px 3px #323232, 30px 6px #323232, 30px 9px #323232, 30px 12px #323232, 30px 15px #323232, 30px 18px #323232, 30px 21px #323232,
+                6px 9px #f8a97f, 6px 12px #f8a97f, 6px 15px #f8a97f, 6px 18px #f8a97f, 6px 21px #f8a97f, 6px 24px #f8a97f, 6px 27px #f8a97f,
+                9px 9px #f8a97f, 9px 12px #f8a97f, 9px 15px #f8a97f, 9px 18px #f8a97f, 9px 24px #f8a97f, 9px 27px #f8a97f, 9px 30px #f8a97f,
+                12px 12px #f8a97f, 12px 15px #f8a97f, 12px 18px #f8a97f, 12px 21px #f8a97f, 12px 24px #f8a97f, 12px 27px #f8a97f, 12px 30px #f8a97f,
+                15px 15px #f8a97f, 15px 18px #f8a97f, 15px 21px #f8a97f, 15px 24px #f8a97f, 15px 27px #f8a97f, 15px 30px #f8a97f,
+                18px 9px #f8a97f, 18px 12px #f8a97f, 18px 15px #f8a97f, 18px 18px #f8a97f, 18px 21px #f8a97f, 18px 24px #f8a97f, 18px 27px #f8a97f, 18px 30px #f8a97f,
+                21px 9px #f8a97f, 21px 12px #f8a97f, 21px 15px #f8a97f, 21px 18px #f8a97f, 21px 24px #f8a97f, 21px 27px #f8a97f, 21px 30px #f8a97f, 21px 33px #f8a97f,
+                24px 6px #f8a97f, 24px 9px #f8a97f, 24px 12px #f8a97f, 24px 15px #f8a97f, 24px 18px #f8a97f, 24px 21px #f8a97f, 24px 24px #f8a97f, 24px 27px #f8a97f, 24px 30px #f8a97f, 24px 33px #f8a97f,
+                27px 12px #f8a97f, 27px 15px #f8a97f, 27px 18px #f8a97f, 27px 21px #f8a97f, 27px 24px #f8a97f, 27px 27px #f8a97f, 27px 30px #f8a97f, 27px 33px #f8a97f,
+                30px 24px #f8a97f, 30px 27px #f8a97f, 30px 30px #f8a97f, 33px 21px #f8a97f, 33px 24px #f8a97f,
+                3px 48px #f8a97f, 30px 48px #f8a97f,
+                3px 12px #f79767, 3px 15px #f79767, 3px 18px #f79767, 3px 21px #f79767, 3px 24px #f79767, 3px 27px #f79767, 3px 30px #f79767, 6px 30px #f79767, 6px 33px #f79767, 9px 33px #f79767, 12px 33px #f79767, 15px 33px #f79767, 18px 33px #f79767,
+                30px 36px #b01e23, 33px 36px #b01e23, 6px 39px #b01e23, 9px 39px #b01e23, 21px 39px #b01e23, 24px 39px #b01e23, 27px 39px #b01e23, 33px 39px #b01e23, 36px 39px #b01e23, 15px 42px #b01e23, 36px 42px #b01e23, 39px 42px #b01e23, 36px 45px #b01e23, 39px 45px #b01e23, 36px 48px #b01e23, 39px 48px #b01e23, 42px 48px #b01e23, 33px 51px #b01e23, 36px 51px #b01e23, 39px 51px #b01e23, 42px 51px #b01e23, 45px 51px #b01e23, 12px 54px #b01e23, 15px 54px #b01e23, 18px 54px #b01e23, 30px 54px #b01e23, 33px 54px #b01e23, 36px 54px #b01e23, 39px 54px #b01e23, 9px 57px #b01e23, 12px 57px #b01e23, 21px 57px #b01e23, 24px 57px #b01e23,
+                3px 42px #3671b8, 3px 45px #3671b8, 9px 42px #3671b8, 9px 45px #3671b8, 9px 48px #3671b8, 9px 54px #3671b8, 12px 39px #3671b8, 12px 45px #3671b8, 12px 48px #3671b8, 15px 39px #3671b8, 15px 45px #3671b8, 15px 48px #3671b8, 18px 39px #3671b8, 18px 45px #3671b8, 18px 48px #3671b8, 21px 42px #3671b8, 21px 45px #3671b8, 21px 48px #3671b8, 21px 54px #3671b8, 24px 42px #3671b8, 24px 45px #3671b8, 24px 48px #3671b8, 24px 54px #3671b8, 30px 42px #3671b8, 30px 45px #3671b8,
+                12px 42px #e3ac23, 18px 42px #e3ac23, 15px 45px #e3ac23, 9px 51px #e3ac23, 12px 51px #e3ac23, 15px 51px #e3ac23, 18px 51px #e3ac23, 21px 51px #e3ac23, 24px 51px #e3ac23;
+            transform: scale(1.08);
+            transform-origin: top left;
+        }
+        
+        /* 像素太陽 */
+        .pixel-sun {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            background: #FFD700;
+            box-shadow: 
+                0 -8px 0 0 #FFD700,
+                8px 0 0 0 #FFD700,
+                0 8px 0 0 #FFD700,
+                -8px 0 0 0 #FFD700;
+            transition: opacity 0.5s ease;
+        }
+        
+        /* 暴雨天氣時隱藏太陽 */
+        .main-scene.weather-rainy .pixel-sun {
+            opacity: 0;
+        }
+        
+        /* 對話框 - 寶可夢風格 */
+        .dialogue-box {
+            background: #f8f8f8;
+            padding: 16px;
+            margin: 10px;
+            position: relative;
+            font-size: 14px;
+        }
+        
+        .dialogue-box::before {
+            content: '▶';
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        /* 系統選單 - 寶可夢風格 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .menu-item {
+            background: #f8f8f8;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+        }
+        
+        .menu-item:hover {
+            background: #e8e8e8;
+            transform: translate(-2px, -2px);
+            box-shadow: 
+                2px 6px 0 0 #000,
+                6px 2px 0 0 #000,
+                6px 6px 0 0 #000;
+        }
+        
+        .menu-item h3 {
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .menu-item p {
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        /* 開關 - Game Boy 風格 */
+        .pixel-switch {
+            width: 48px;
+            height: 20px;
+            background: #606060;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .pixel-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 16px;
+            background: #d0d0d0;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .pixel-switch.active {
+            background: #4CAF50;
+        }
+        
+        .pixel-switch.active::after {
+            transform: translateX(24px);
+            background: #fff;
+        }
+        
+        /* 系統視窗 */
+        .system-window {
+            background: #f8f8f8;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .system-window.active {
+            display: block;
+        }
+        
+        .window-header {
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            margin: -16px -16px 16px -16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-btn {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+        }
+        
+        /* 進度條 - 像素風格 */
+        .pixel-bar {
+            background: #000;
+            height: 24px;
+            position: relative;
+            margin: 16px 0;
+        }
+        
+        .pixel-bar-fill {
+            background: #4CAF50;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            position: relative;
+        }
+        
+        .pixel-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 4px;
+            background: repeating-linear-gradient(
+                to bottom,
+                #4CAF50 0px,
+                #4CAF50 4px,
+                #45a049 4px,
+                #45a049 8px
+            );
+        }
+        
+        /* 物品按鈕 */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .pixel-item {
+            background: #e0e0e0;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.1s;
+        }
+        
+        .pixel-item:hover {
+            background: #d0d0d0;
+            transform: scale(1.1);
+        }
+        
+        .pixel-item:active {
+            background: #c0c0c0;
+            transform: scale(0.95);
+        }
+        
+        /* 鄰居圖鑑 */
+        .neighbor-dex {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        
+        .dex-entry {
+            background: #e8e8e8;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0.5;
+            filter: grayscale(100%);
+            transition: all 0.2s;
+        }
+        
+        .dex-entry.discovered {
+            opacity: 1;
+            filter: grayscale(0%);
+            background: #d8f8d8;
+        }
+        
+        .dex-entry h4 {
+            font-size: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .dex-entry p {
+            font-size: 8px;
+            line-height: 1.4;
+        }
+        
+        /* 按鈕 */
+        .pixel-btn {
+            background: #606060;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            margin: 4px;
+            transition: all 0.1s;
+        }
+        
+        .pixel-btn:hover {
+            background: #505050;
+            transform: translate(-1px, -1px);
+            box-shadow: 1px 1px 0 0 #000;
+        }
+        
+        .pixel-btn:active {
+            transform: translate(0, 0);
+            box-shadow: none;
+        }
+        
+        /* 輸入框 */
+        .pixel-input, .pixel-select, .pixel-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #000;
+            background: #fff;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            margin: 8px 0;
+        }
+        
+        .pixel-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        /* 日記顯示 */
+        .diary-log {
+            background: #000;
+            color: #0f0;
+            padding: 16px;
+            margin: 16px 0;
+            font-size: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #0f0;
+        }
+        
+        .log-date {
+            color: #ff0;
+            margin-bottom: 4px;
+        }
+        
+        /* 營區體驗管理系統樣式 */
+        .neighbor-types, .defense-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .neighbor-type, .defense-method {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        
+        .neighbor-type:hover, .defense-method:hover {
+            background: #d0d0d0;
+            transform: scale(1.02);
+        }
+        
+        .type-indicator, .method-indicator {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .type-indicator.active, .method-indicator.active {
+            color: #ff0000;
+        }
+        
+        .environment-ratings {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .rating-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #f0f0f0;
+        }
+        
+        .rating-item span {
+            font-size: 10px;
+            flex: 1;
+        }
+        
+        .rating-item .pixel-select {
+            width: 60px;
+            margin: 0;
+            font-size: 8px;
+            padding: 4px;
+        }
+        
+        .reputation-display {
+            background: #f8f8f8;
+            padding: 12px;
+            margin: 16px 0;
+        }
+        
+        .reputation-score {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        /* 花費系統樣式 */
+        .budget-display {
+            background: #f8f8f8;
+            padding: 16px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .budget-amount {
+            font-size: 20px;
+            color: #4CAF50;
+        }
+        
+        .expense-form {
+            display: grid;
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .expense-log {
+            background: #000;
+            color: #0f0;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 10px;
+        }
+        
+        .expense-entry {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #0f0;
+        }
+        
+        .expense-category {
+            color: #ff0;
+            width: 80px;
+        }
+        
+        .expense-description {
+            flex: 1;
+            margin: 0 8px;
+        }
+        
+        .expense-amount {
+            color: #f00;
+            text-align: right;
+        }
+        
+        .category-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            background: #f0f0f0;
+            font-size: 10px;
+        }
+
+        /* 獨立事件系統樣式 */
+        .menu-section, .event-section {
+            margin: 16px 0;
+        }
+        
+        .menu-log, .event-log {
+            background: #f8f8f8;
+            padding: 12px;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 10px;
+        }
+        
+        .menu-entry, .event-entry {
+            margin-bottom: 8px;
+            padding: 4px;
+            background: #e0e0e0;
+        }
+        
+        .weather-options {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .weather-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px 8px;
+            background: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        
+        .weather-option:hover {
+            background: #d0d0d0;
+            transform: scale(1.05);
+        }
+        
+        .weather-option.selected {
+            background: #4CAF50;
+            color: #fff;
+        }
+        
+        .weather-icon {
+            font-size: 20px;
+            margin-top: 4px;
+        }
+        
+        .weather-display {
+            text-align: center;
+            padding: 8px;
+            background: #f0f0f0;
+            font-size: 12px;
+        }
+
+        /* 日記系統樣式 */
+        .diary-controls-only {
+            padding: 16px;
+            background: #fefefe;
+            text-align: center;
+        }
+        
+        .diary-controls-only h3 {
+            margin-bottom: 12px;
+        }
+        
+        .diary-controls-only p {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        /* 露營區名稱輸入樣式 */
+        .campground-input {
+            background: #f8f8f8;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .campground-input h3 {
+            font-size: 12px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .campground-input .pixel-input {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        /* 今日報告覆蓋層樣式 */
+        .daily-report-overlay {
+            position: absolute;
+            top: 420px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background: #f8f8f8;
+            padding: 16px;
+            z-index: 10;
+            box-shadow: 0 8px 0 0 #000, 8px 0 0 0 #000, 8px 8px 0 0 #000;
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .report-header h3 {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .report-date {
+            font-size: 10px;
+            color: #666;
+            background: #e0e0e0;
+            padding: 4px 8px;
+        }
+        
+        .report-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .report-section {
+            background: #fff;
+            padding: 8px;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .report-section h4 {
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 10px;
+            background: #f0f0f0;
+            padding: 2px 4px;
+        }
+        
+        .report-section div {
+            font-size: 8px;
+            line-height: 1.3;
+            color: #555;
+        }
+        
+        /* 報告操作按鈕 */
+        .report-actions {
+            margin-top: 16px;
+            text-align: center;
+            padding-top: 12px;
+            border-top: 2px solid #000;
+        }
+        
+        .report-actions .pixel-btn {
+            margin: 0 8px;
+        }
+        
+        /* 手機截圖優化 */
+        @media screen and (max-width: 768px) {
+            .daily-report-overlay {
+                width: 95%;
+                font-size: 11px;
+            }
+            
+            .report-content {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .report-section h4 {
+                font-size: 9px;
+            }
+            
+            .report-section div {
+                font-size: 7px;
+            }
+        }
+
+        /* 動畫 */
+        @keyframes pixelFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        
+        .pixel-trainer {
+            animation: pixelFloat 2s ease-in-out infinite;
+        }
+        
+        .ez-character {
+            animation-delay: 0.5s;
+        }
+        
+        /* 小狗角色樣式 */
+        .dog-character {
+            position: absolute;
+            bottom: 40px;
+            left: calc(50% - 120px);
+            z-index: 5;
+        }
+        
+        .dog__container {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .dog {
+            width: 60px;
+            height: 48px;
+            background-image: url(https://raw.githubusercontent.com/gokhanozt/gokhanozt/master/assets/dogs1.png);
+            animation: dogSpriteAnimation 0.7s steps(2) infinite;
+            filter: drop-shadow(0px -1px 7px rgba(0,0,0,0.8));
+            transform: scale(0.64);
+        }
+
+        @keyframes dogSpriteAnimation {
+            from { background-position-x: 0px; }
+            to { background-position-x: 120px; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CAMPING DIARY SYSTEM</h1>
+        
+        <!-- 主場景 -->
+        <div class="main-scene pixel-border">
+            <div class="pixel-sun"></div>
+            <div class="pixel-grass"></div>
+            <div class="pixel-tent">
+                <div class="tent-pixelart"></div>
+            </div>
+            <div class="pixel-trainer yun-character">
+                <div class="yun-pixelart"></div>
+            </div>
+            <div class="pixel-trainer ez-character">
+                <div class="ez-pixelart"></div>
+            </div>
+            <div class="dog-character">
+                <div class="dog__container">
+                    <div class="dog"></div>
+                </div>
+            </div>
+            <div id="rain"></div>
+        </div>
+        
+        <div class="dialogue-box pixel-border">
+            歡迎使用露營日記系統！請選擇要啟用的功能。
+        </div>
+        
+        <!-- 露營區名稱輸入 -->
+        <div class="campground-input pixel-border">
+            <h3>🏕️ 露營區資訊</h3>
+            <input type="text" class="pixel-input" id="campground-name" placeholder="請輸入露營區名稱..." maxlength="50">
+        </div>
+        
+        <!-- 系統選單 -->
+        <div class="menu-grid">
+            <div class="menu-item pixel-border" onclick="toggleSystem('neighbor')">
+                <h3>
+                    營區體驗管理
+                    <div class="pixel-switch" id="neighbor-toggle"></div>
+                </h3>
+                <p>記錄鄰居類型、防禦方式、環境評分</p>
+            </div>
+            
+            <div class="menu-item pixel-border" onclick="toggleSystem('resource')">
+                <h3>
+                    花費系統
+                    <div class="pixel-switch" id="resource-toggle"></div>
+                </h3>
+                <p>分類記錄支出與預算管理</p>
+            </div>
+            
+            <div class="menu-item pixel-border" onclick="toggleSystem('types')">
+                <h3>
+                    獨立事件系統
+                    <div class="pixel-switch" id="types-toggle"></div>
+                </h3>
+                <p>記錄菜單、天氣、特殊事件</p>
+            </div>
+            
+            <div class="menu-item pixel-border" onclick="toggleSystem('diary')">
+                <h3>
+                    日記記錄系統
+                    <div class="pixel-switch" id="diary-toggle"></div>
+                </h3>
+                <p>整合顯示所有系統數據</p>
+            </div>
+        </div>
+        
+        <!-- 營區體驗管理系統 -->
+        <div class="system-window pixel-border" id="neighbor-system">
+            <div class="window-header">
+                <span>營區體驗管理</span>
+                <button class="close-btn" onclick="toggleSystem('neighbor')">X</button>
+            </div>
+            
+            <h3>煩人鄰居記錄</h3>
+            <div class="neighbor-types">
+                <div class="neighbor-type pixel-border" onclick="toggleNeighborType('熊孩子家庭')">
+                    <span>熊孩子家庭</span>
+                    <div class="type-indicator" id="熊孩子家庭-indicator">○</div>
+                </div>
+                <div class="neighbor-type pixel-border" onclick="toggleNeighborType('吵鬧學生')">
+                    <span>吵鬧學生</span>
+                    <div class="type-indicator" id="吵鬧學生-indicator">○</div>
+                </div>
+                <div class="neighbor-type pixel-border" onclick="toggleNeighborType('菸槍爛咖')">
+                    <span>菸槍爛咖</span>
+                    <div class="type-indicator" id="菸槍爛咖-indicator">○</div>
+                </div>
+                <div class="neighbor-type pixel-border" onclick="toggleNeighborType('網美露營客')">
+                    <span>網美露營客</span>
+                    <div class="type-indicator" id="網美露營客-indicator">○</div>
+                </div>
+                <div class="neighbor-type pixel-border" onclick="toggleNeighborType('裝備炫耀狂')">
+                    <span>裝備炫耀狂</span>
+                    <div class="type-indicator" id="裝備炫耀狂-indicator">○</div>
+                </div>
+            </div>
+            
+            <h3>防禦方式記錄</h3>
+            <div class="defense-methods">
+                <div class="defense-method pixel-border" onclick="toggleDefenseMethod('耳塞')">
+                    <span>耳塞</span>
+                    <div class="method-indicator" id="耳塞-method">○</div>
+                </div>
+                <div class="defense-method pixel-border" onclick="toggleDefenseMethod('音樂')">
+                    <span>音樂</span>
+                    <div class="method-indicator" id="音樂-method">○</div>
+                </div>
+                <div class="defense-method pixel-border" onclick="toggleDefenseMethod('直接溝通')">
+                    <span>直接溝通</span>
+                    <div class="method-indicator" id="直接溝通-method">○</div>
+                </div>
+                <div class="defense-method pixel-border" onclick="toggleDefenseMethod('向管理員舉報')">
+                    <span>向管理員舉報</span>
+                    <div class="method-indicator" id="向管理員舉報-method">○</div>
+                </div>
+                <div class="defense-method pixel-border" onclick="toggleDefenseMethod('默默忍耐')">
+                    <span>默默忍耐</span>
+                    <div class="method-indicator" id="默默忍耐-method">○</div>
+                </div>
+            </div>
+            
+            <h3>營區環境評分</h3>
+            <div class="environment-ratings">
+                <div class="rating-item">
+                    <span>人員態度</span>
+                    <select class="pixel-select" id="人員態度-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+                <div class="rating-item">
+                    <span>周遭環境</span>
+                    <select class="pixel-select" id="周遭環境-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+                <div class="rating-item">
+                    <span>飲水機</span>
+                    <select class="pixel-select" id="飲水機-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+                <div class="rating-item">
+                    <span>冰箱</span>
+                    <select class="pixel-select" id="冰箱-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+                <div class="rating-item">
+                    <span>盥洗設備</span>
+                    <select class="pixel-select" id="盥洗設備-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+                <div class="rating-item">
+                    <span>供電系統</span>
+                    <select class="pixel-select" id="供電系統-rating" onchange="updateRating()">
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3" selected>3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                    </select>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- 花費系統 -->
+        <div class="system-window pixel-border" id="resource-system">
+            <div class="window-header">
+                <span>花費系統</span>
+                <button class="close-btn" onclick="toggleSystem('resource')">X</button>
+            </div>
+            
+            <h3>新增支出</h3>
+            <div class="expense-form">
+                <select class="pixel-select" id="expense-category">
+                    <option value="食材採購">食材採購</option>
+                    <option value="設備升級">設備升級</option>
+                    <option value="交通花費">交通花費</option>
+                    <option value="營區費用">營區費用</option>
+                </select>
+                <input type="text" class="pixel-input" id="expense-description" placeholder="支出描述...">
+                <input type="number" class="pixel-input" id="expense-amount" placeholder="金額">
+                <button class="pixel-btn" onclick="addExpense()">記錄支出</button>
+            </div>
+            
+            <h3>支出記錄</h3>
+            <div class="expense-log pixel-border" id="expense-log">
+                <div class="expense-entry">
+                    <div class="expense-category">系統</div>
+                    <div class="expense-description">預算初始化</div>
+                    <div class="expense-amount">+$5000</div>
+                </div>
+            </div>
+            
+            <h3>分類統計</h3>
+            <div class="category-stats">
+                <div class="stat-item">
+                    <span>食材採購</span>
+                    <span id="食材採購-total">$0</span>
+                </div>
+                <div class="stat-item">
+                    <span>設備升級</span>
+                    <span id="設備升級-total">$0</span>
+                </div>
+                <div class="stat-item">
+                    <span>交通花費</span>
+                    <span id="交通花費-total">$0</span>
+                </div>
+                <div class="stat-item">
+                    <span>營區費用</span>
+                    <span id="營區費用-total">$0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 獨立事件系統 -->
+        <div class="system-window pixel-border" id="types-system">
+            <div class="window-header">
+                <span>獨立事件系統</span>
+                <button class="close-btn" onclick="toggleSystem('types')">X</button>
+            </div>
+            
+            <h3>今日菜單</h3>
+            <div class="menu-section">
+                <input type="text" class="pixel-input" id="menu-input" placeholder="例如：烤肉配啤酒">
+                <button class="pixel-btn" onclick="addMenu()">記錄菜單</button>
+            </div>
+            <div class="menu-log pixel-border" id="menu-log">
+                <div class="menu-entry">等待菜單記錄...</div>
+            </div>
+            
+            <h3>天氣日誌</h3>
+            <div class="weather-section">
+                <div class="weather-options">
+                    <div class="weather-option pixel-border" onclick="selectWeather('清爽舒適')">
+                        <span>清爽舒適</span>
+                        <div class="weather-icon">☀️</div>
+                    </div>
+                    <div class="weather-option pixel-border" onclick="selectWeather('暴雨淹水')">
+                        <span>暴雨淹水</span>
+                        <div class="weather-icon">🌧️</div>
+                    </div>
+                    <div class="weather-option pixel-border" onclick="selectWeather('大太陽悶熱')">
+                        <span>大太陽悶熱</span>
+                        <div class="weather-icon">🔥</div>
+                    </div>
+                </div>
+                <div class="weather-display">
+                    今日天氣: <span id="current-weather">未選擇</span>
+                </div>
+            </div>
+            
+            <h3>特殊事件</h3>
+            <div class="event-section">
+                <textarea class="pixel-textarea" id="special-event" placeholder="例如：停電、營區活動、意外發現好景點..."></textarea>
+                <button class="pixel-btn" onclick="addSpecialEvent()">記錄事件</button>
+            </div>
+            <div class="event-log pixel-border" id="event-log">
+                <div class="event-entry">等待事件記錄...</div>
+            </div>
+        </div>
+        
+        <!-- 日記記錄系統 -->
+        <div class="system-window pixel-border" id="diary-system">
+            <div class="window-header">
+                <span>日記記錄系統</span>
+                <button class="close-btn" onclick="toggleSystem('diary')">X</button>
+            </div>
+            
+            <div class="diary-controls-only">
+                <h3>📖 露營日記</h3>
+                <p>點擊生成報告後，將顯示在主畫面中，方便截圖留念！</p>
+                <div class="control-buttons">
+                    <button class="pixel-btn" onclick="generateDailyReport()">生成今日報告</button>
+                    <button class="pixel-btn" onclick="clearTodayData()">清空今日記錄</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 今日報告顯示區（與主場景整合） -->
+        <div class="daily-report-overlay pixel-border" id="daily-report-overlay" style="display: none;">
+            <div class="report-header">
+                <h3>📖 今日露營總結</h3>
+                <span class="report-date" id="report-date"></span>
+            </div>
+            
+            <div class="report-content">
+                <div class="report-section">
+                    <h4>🏕️ 營區體驗</h4>
+                    <div id="experience-summary">請先在營區體驗管理中記錄資料</div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>💰 今日花費</h4>
+                    <div id="expense-summary">尚無支出記錄</div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>🍽️ 今日菜單</h4>
+                    <div id="menu-summary">尚未記錄菜單</div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>🌤️ 天氣狀況</h4>
+                    <div id="weather-summary">尚未選擇天氣</div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>✨ 特殊事件</h4>
+                    <div id="event-summary">無特殊事件</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <script>
+        // 系統狀態
+        const systems = {
+            neighbor: false,
+            resource: false,
+            types: false,
+            diary: false
+        };
+        
+        // 數據存儲
+        let campData = {
+            campgroundName: '',
+            neighborTypes: new Set(),
+            defenseMethods: new Set(),
+            environmentRatings: {
+                '人員態度': 3,
+                '周遭環境': 3,
+                '飲水機': 3,
+                '冰箱': 3,
+                '盥洗設備': 3,
+                '供電系統': 3
+            },
+            expenses: [],
+            categoryTotals: {
+                '食材採購': 0,
+                '設備升級': 0,
+                '交通花費': 0,
+                '營區費用': 0
+            },
+            todayMenu: [],
+            currentWeather: '未選擇',
+            specialEvents: []
+        };
+        
+        // 切換系統
+        function toggleSystem(system) {
+            systems[system] = !systems[system];
+            const toggle = document.getElementById(`${system}-toggle`);
+            const window = document.getElementById(`${system}-system`);
+            
+            if (systems[system]) {
+                toggle.classList.add('active');
+                window.classList.add('active');
+                playSound('open');
+            } else {
+                toggle.classList.remove('active');
+                window.classList.remove('active');
+                playSound('close');
+            }
+        }
+        
+        // 音效模擬
+        function playSound(type) {
+            console.log(`播放音效: ${type}`);
+        }
+        
+        // === 營區體驗管理系統 ===
+        
+        // 切換鄰居類型
+        function toggleNeighborType(type) {
+            const indicator = document.getElementById(`${type}-indicator`);
+            if (campData.neighborTypes.has(type)) {
+                campData.neighborTypes.delete(type);
+                indicator.textContent = '○';
+                indicator.classList.remove('active');
+            } else {
+                campData.neighborTypes.add(type);
+                indicator.textContent = '●';
+                indicator.classList.add('active');
+            }
+            showMessage(`${campData.neighborTypes.has(type) ? '記錄' : '移除'}了 ${type}`);
+        }
+        
+        // 切換防禦方式
+        function toggleDefenseMethod(method) {
+            const indicator = document.getElementById(`${method}-method`);
+            if (campData.defenseMethods.has(method)) {
+                campData.defenseMethods.delete(method);
+                indicator.textContent = '○';
+                indicator.classList.remove('active');
+            } else {
+                campData.defenseMethods.add(method);
+                indicator.textContent = '●';
+                indicator.classList.add('active');
+            }
+            showMessage(`${campData.defenseMethods.has(method) ? '記錄' : '移除'}了 ${method}`);
+        }
+        
+        // 更新環境評分
+        function updateRating() {
+            const ratings = ['人員態度', '周遭環境', '飲水機', '冰箱', '盥洗設備', '供電系統'];
+            ratings.forEach(item => {
+                const select = document.getElementById(`${item}-rating`);
+                campData.environmentRatings[item] = parseInt(select.value);
+            });
+        }
+        
+        
+        // === 花費系統 ===
+        
+        // 新增支出
+        function addExpense() {
+            const category = document.getElementById('expense-category').value;
+            const description = document.getElementById('expense-description').value;
+            const amount = parseInt(document.getElementById('expense-amount').value);
+            
+            if (!description || !amount || amount <= 0) {
+                showMessage('請輸入完整的支出資訊！');
+                return;
+            }
+            
+            // 記錄支出
+            const expense = {
+                category: category,
+                description: description,
+                amount: amount,
+                date: new Date().toLocaleDateString('zh-TW')
+            };
+            campData.expenses.unshift(expense);
+            
+            // 更新分類統計
+            campData.categoryTotals[category] += amount;
+            document.getElementById(`${category}-total`).textContent = `$${campData.categoryTotals[category]}`;
+            
+            // 更新支出記錄顯示
+            updateExpenseLog();
+            
+            // 清空輸入
+            document.getElementById('expense-description').value = '';
+            document.getElementById('expense-amount').value = '';
+            
+            showMessage(`記錄支出: ${description} $${amount}`);
+        }
+        
+        // 更新支出記錄顯示
+        function updateExpenseLog() {
+            const log = document.getElementById('expense-log');
+            log.innerHTML = '';
+            
+            campData.expenses.slice(0, 10).forEach(expense => {
+                const entry = document.createElement('div');
+                entry.className = 'expense-entry';
+                entry.innerHTML = `
+                    <div class="expense-category">${expense.category}</div>
+                    <div class="expense-description">${expense.description}</div>
+                    <div class="expense-amount">-$${expense.amount}</div>
+                `;
+                log.appendChild(entry);
+            });
+        }
+        
+        // === 獨立事件系統 ===
+        
+        // 新增菜單
+        function addMenu() {
+            const menuInput = document.getElementById('menu-input');
+            const menu = menuInput.value.trim();
+            
+            if (!menu) {
+                showMessage('請輸入菜單內容！');
+                return;
+            }
+            
+            campData.todayMenu.push(menu);
+            menuInput.value = '';
+            
+            updateMenuLog();
+            showMessage(`記錄菜單: ${menu}`);
+        }
+        
+        // 更新菜單記錄
+        function updateMenuLog() {
+            const log = document.getElementById('menu-log');
+            if (campData.todayMenu.length === 0) {
+                log.innerHTML = '<div class="menu-entry">等待菜單記錄...</div>';
+            } else {
+                log.innerHTML = '';
+                campData.todayMenu.forEach(menu => {
+                    const entry = document.createElement('div');
+                    entry.className = 'menu-entry';
+                    entry.textContent = `🍽️ ${menu}`;
+                    log.appendChild(entry);
+                });
+            }
+        }
+        
+        // 選擇天氣
+        // 天氣效果管理
+        let rainInterval = null;
+        
+        function selectWeather(weather) {
+            // 移除所有選中狀態
+            document.querySelectorAll('.weather-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 添加選中狀態
+            event.target.closest('.weather-option').classList.add('selected');
+            
+            // 停止之前的天氣效果
+            clearWeatherEffects();
+            
+            // 應用新的天氣效果
+            const mainScene = document.querySelector('.main-scene');
+            mainScene.className = 'main-scene pixel-border'; // 重置類名
+            
+            switch(weather) {
+                case '清爽舒適':
+                    // 維持原本的藍天效果，不需要額外處理
+                    break;
+                case '暴雨淹水':
+                    mainScene.classList.add('weather-rainy');
+                    startRainEffect();
+                    break;
+                case '大太陽悶熱':
+                    mainScene.classList.add('weather-sunny');
+                    break;
+            }
+            
+            campData.currentWeather = weather;
+            document.getElementById('current-weather').textContent = weather;
+            showMessage(`天氣設定為: ${weather}`);
+        }
+        
+        // 清除天氣效果
+        function clearWeatherEffects() {
+            if (rainInterval) {
+                clearInterval(rainInterval);
+                rainInterval = null;
+            }
+            document.getElementById('rain').innerHTML = '';
+        }
+        
+        // 下雨效果相關函數
+        function startRainEffect() {
+            const rate = 1200; // 雨滴數量
+            rainInterval = setInterval(function(){
+                createRainDrop();
+            }, 1000/rate);
+        }
+        
+        function createRainDrop() {
+            const rainEl = document.getElementById('rain');
+            const droptime = 250; // 雨滴下落時間 (ms)
+            const timetolive = 80; // 雨滴落地存在時間 (ms)
+            
+            let el = document.createElement('div');
+            el.style.transition = 'margin-top ' + droptime + 'ms linear';
+            el.style.marginTop = '-10px';
+            el.style.marginLeft = randomRange(0, rainEl.offsetWidth) + 'px';
+            rainEl.appendChild(el);
+            
+            setTimeout(function(){ 
+                el.style.marginTop = randomRange(0, rainEl.offsetHeight) + 10 + 'px' 
+            }, 10); // 開始下落
+            
+            setTimeout(function(){ 
+                el.classList.add('drop') 
+            }, 10 + droptime); // 落地效果
+            
+            setTimeout(function(){ 
+                if (rainEl.contains(el)) {
+                    rainEl.removeChild(el) 
+                }
+            }, droptime + timetolive + 10); // 移除雨滴
+        }
+        
+        function randomRange(min, max) {
+            return (Math.floor(Math.random() * (max - min + 1)) + min);
+        }
+        
+        // 新增特殊事件
+        function addSpecialEvent() {
+            const eventInput = document.getElementById('special-event');
+            const eventText = eventInput.value.trim();
+            
+            if (!eventText) {
+                showMessage('請輸入事件內容！');
+                return;
+            }
+            
+            campData.specialEvents.push(eventText);
+            eventInput.value = '';
+            
+            updateEventLog();
+            showMessage('特殊事件已記錄！');
+        }
+        
+        // 更新事件記錄
+        function updateEventLog() {
+            const log = document.getElementById('event-log');
+            if (campData.specialEvents.length === 0) {
+                log.innerHTML = '<div class="event-entry">等待事件記錄...</div>';
+            } else {
+                log.innerHTML = '';
+                campData.specialEvents.forEach(event => {
+                    const entry = document.createElement('div');
+                    entry.className = 'event-entry';
+                    entry.textContent = `✨ ${event}`;
+                    log.appendChild(entry);
+                });
+            }
+        }
+        
+        // === 日記系統 ===
+        
+        // 生成今日報告
+        function generateDailyReport() {
+            // 更新露營區名稱
+            const campgroundInput = document.getElementById('campground-name');
+            campData.campgroundName = campgroundInput.value.trim() || '未命名露營區';
+            
+            // 營區體驗總結
+            let experienceSummary = '';
+            if (campData.neighborTypes.size > 0) {
+                experienceSummary += `遇到煩人鄰居: ${Array.from(campData.neighborTypes).join('、')}。`;
+            }
+            if (campData.defenseMethods.size > 0) {
+                experienceSummary += ` 使用防禦方式: ${Array.from(campData.defenseMethods).join('、')}。`;
+            }
+            const avgRating = Object.values(campData.environmentRatings).reduce((a, b) => a + b, 0) / 6;
+            experienceSummary += ` 營區環境平均評分: ${avgRating.toFixed(1)}/5`;
+            
+            document.getElementById('experience-summary').textContent = experienceSummary || '今日無特殊體驗記錄';
+            
+            // 花費總結
+            const todayExpenses = campData.expenses.filter(exp => exp.date === new Date().toLocaleDateString('zh-TW'));
+            const todayTotal = todayExpenses.reduce((total, exp) => total + exp.amount, 0);
+            let expenseSummary = `今日共支出 $${todayTotal}。`;
+            if (todayExpenses.length > 0) {
+                expenseSummary += ` 主要支出: ${todayExpenses.map(exp => `${exp.description}($${exp.amount})`).join('、')}`;
+            }
+            document.getElementById('expense-summary').textContent = todayTotal > 0 ? expenseSummary : '今日無支出記錄';
+            
+            // 菜單總結
+            document.getElementById('menu-summary').textContent = campData.todayMenu.length > 0 ? 
+                campData.todayMenu.join('、') : '今日未記錄菜單';
+            
+            // 天氣總結
+            document.getElementById('weather-summary').textContent = campData.currentWeather;
+            
+            // 特殊事件總結
+            document.getElementById('event-summary').textContent = campData.specialEvents.length > 0 ? 
+                campData.specialEvents.join('；') : '今日無特殊事件';
+            
+            // 設定報告日期和露營區名稱
+            document.getElementById('report-date').textContent = new Date().toLocaleDateString('zh-TW');
+            document.querySelector('.report-header h3').textContent = `📖 ${campData.campgroundName} - 今日露營總結`;
+            
+            // 隱藏其他界面元素，只保留主場景和報告
+            hideInterfaceForScreenshot();
+            
+            // 顯示報告覆蓋層
+            document.getElementById('daily-report-overlay').style.display = 'block';
+            
+            
+            showMessage('今日報告已生成！準備好截圖了嗎？');
+        }
+        
+        
+        // 隱藏界面元素供截圖
+        function hideInterfaceForScreenshot() {
+            document.querySelector('h1').style.display = 'none';
+            document.querySelector('.dialogue-box').style.display = 'none';
+            document.querySelector('.campground-input').style.display = 'none';
+            document.querySelector('.menu-grid').style.display = 'none';
+            document.querySelectorAll('.system-window').forEach(window => {
+                window.style.display = 'none';
+            });
+        }
+        
+        // 恢復界面元素顯示
+        function showInterfaceAfterScreenshot() {
+            document.querySelector('h1').style.display = 'block';
+            document.querySelector('.dialogue-box').style.display = 'block';
+            document.querySelector('.campground-input').style.display = 'block';
+            document.querySelector('.menu-grid').style.display = 'grid';
+            // 系統視窗恢復之前的狀態
+            document.querySelectorAll('.system-window').forEach(window => {
+                if (window.classList.contains('active')) {
+                    window.style.display = 'block';
+                } else {
+                    window.style.display = 'none';
+                }
+            });
+        }
+        
+        // 清空今日記錄
+        function clearTodayData() {
+            if (confirm('確定要清空今日所有記錄嗎？')) {
+                campData.neighborTypes.clear();
+                campData.defenseMethods.clear();
+                campData.todayMenu = [];
+                campData.currentWeather = '未選擇';
+                campData.specialEvents = [];
+                
+                // 重置UI
+                document.querySelectorAll('.type-indicator, .method-indicator').forEach(indicator => {
+                    indicator.textContent = '○';
+                    indicator.classList.remove('active');
+                });
+                
+                document.querySelectorAll('.weather-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                document.getElementById('current-weather').textContent = '未選擇';
+                
+                // 清除天氣效果並重置主場景樣式
+                clearWeatherEffects();
+                const mainScene = document.querySelector('.main-scene');
+                mainScene.className = 'main-scene pixel-border';
+                
+                // 隱藏報告覆蓋層
+                document.getElementById('daily-report-overlay').style.display = 'none';
+                
+                
+                updateMenuLog();
+                updateEventLog();
+                    
+                showMessage('今日記錄已清空！');
+            }
+        }
+        
+        // 顯示訊息
+        function showMessage(msg) {
+            const dialogueBox = document.querySelector('.dialogue-box');
+            dialogueBox.textContent = msg;
+            setTimeout(() => {
+                dialogueBox.textContent = '歡迎使用露營日記系統！請選擇要啟用的功能。';
+            }, 3000);
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateExpenseLog();
+            updateMenuLog();
+            updateEventLog();
+        });
+    </script>
+</body>
+</html>
