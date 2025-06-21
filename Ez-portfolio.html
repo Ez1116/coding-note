@@ -108,6 +108,26 @@
         .logo-container {
             margin-bottom: 40px;
             opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            justify-content: flex-start;
+        }
+        
+        .profile-image {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #64748b;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(100, 116, 139, 0.3));
+        }
+        
+        .profile-image:hover {
+            border-color: white;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
         }
         
         .text-logo {
@@ -392,6 +412,20 @@
                 font-size: 14px;
             }
             
+            .logo-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .profile-image {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .text-logo {
+                font-size: 36px;
+            }
+            
             .footer-content {
                 flex-direction: column;
                 align-items: center;
@@ -428,6 +462,7 @@
         <div class="container">
             <!-- Logo -->
             <div class="logo-container" id="logoContainer">
+                <img src="ez.jpg" alt="Yi-Chen (EZ) Profile Picture" class="profile-image">
                 <div class="text-logo" onclick="resetAnimation()" style="cursor: pointer;">
                     EZ
                 </div>
