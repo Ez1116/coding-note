@@ -63,6 +63,10 @@ A Google Apps Script for automated survey creation featuring:
   - Form reuse detection (edits existing form if found)
 - **Educational Research**: Designed for assessing student perspectives on science learning and AI integration
 
+### Pixel_art_editor.js
+A web app for creating pixel figures:
+- **Purpose**: Draw or upload your pixel figure. You can oupt the fiugre into PNG or HTML/CSS codes
+
 ## Technologies Used
 - **Web Technologies**: Pure HTML5, CSS3, and JavaScript (ES6+)
 - **Visualization**: Chart.js for data visualization and radar charts
