@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>像素畫編輯器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .editor-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 400px;
+        }
+        
+        .tools-panel {
+            width: 300px;
+            min-width: 280px;
+        }
+        
+        .pixel-canvas {
+            border: 2px solid #333;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            margin: 10px 0;
+        }
+        
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .color-swatch.active {
+            border-color: #333;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        
+        .custom-color {
+            margin: 10px 0;
+        }
+        
+        .custom-color input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .controls {
+            margin: 15px 0;
+        }
+        
+        .controls label {
+            display: block;
+            margin: 10px 0 5px 0;
+            font-weight: bold;
+        }
+        
+        .controls input, .controls select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .code-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .preview-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .preview-image {
+            border: 1px solid #ddd;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>像素畫編輯器</h1>
+    
+    <div class="container">
+        <div class="editor-panel canvas-container">
+            <h3>畫布</h3>
+            <canvas id="pixelCanvas" class="pixel-canvas" width="320" height="320"></canvas>
+            
+            <div class="preview-container">
+                <h3>預覽</h3>
+                <canvas id="previewCanvas" class="preview-image" width="160" height="160"></canvas>
+            </div>
+        </div>
+        
+        <div class="editor-panel tools-panel">
+            <h3>工具</h3>
+            
+            <div class="controls">
+                <label>畫布大小:</label>
+                <select id="canvasSize">
+                    <option value="16">16x16</option>
+                    <option value="32" selected>32x32</option>
+                    <option value="48">48x48</option>
+                    <option value="64">64x64</option>
+                </select>
+            </div>
+            
+            <div class="controls">
+                <label>筆刷大小:</label>
+                <input type="range" id="brushSize" min="1" max="4" value="1">
+                <span id="brushSizeDisplay">1x1</span>
+            </div>
+            
+            <h3>調色盤</h3>
+            <div class="color-palette" id="colorPalette"></div>
+            
+            <div class="custom-color">
+                <label>自訂顏色:</label>
+                <input type="color" id="customColor" value="#000000">
+                <button onclick="addCustomColor()" class="btn-primary">加入調色盤</button>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="undo()" class="btn-secondary" id="undoBtn" disabled>復原</button>
+                <button onclick="redo()" class="btn-secondary" id="redoBtn" disabled>重做</button>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="clearCanvas()" class="btn-danger">清除</button>
+                <button onclick="fillCanvas()" class="btn-secondary">填滿</button>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="generateCSS()" class="btn-primary">生成 CSS</button>
+                <button onclick="generateHTML()" class="btn-primary">生成 HTML</button>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="exportPNG()" class="btn-secondary">匯出 PNG</button>
+                <button onclick="importImage()" class="btn-secondary">匯入圖片</button>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            
+            <div id="codeOutput" class="code-output" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pixelCanvas');
+        const ctx = canvas.getContext('2d');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
+        
+        let gridSize = 32;
+        let pixelSize = 10;
+        let currentColor = '#000000';
+        let brushSize = 1;
+        let isDrawing = false;
+        let pixels = {};
+        let history = [];
+        let historyIndex = -1;
+        const maxHistorySize = 50;
+        
+        // 預設調色盤
+        const defaultColors = [
+            '#000000', '#FFFFFF', '#FF0000', '#00FF00',
+            '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+            '#800000', '#008000', '#000080', '#808000',
+            '#800080', '#008080', '#808080', '#C0C0C0'
+        ];
+        
+        function initializeCanvas() {
+            updateCanvasSize();
+            initializeColorPalette();
+            setupEventListeners();
+            saveToHistory(); // 儲存初始狀態
+            drawGrid();
+            updatePreview();
+        }
+        
+        function updateCanvasSize() {
+            gridSize = parseInt(document.getElementById('canvasSize').value);
+            pixelSize = Math.floor(320 / gridSize);
+            canvas.width = gridSize * pixelSize;
+            canvas.height = gridSize * pixelSize;
+            pixels = {};
+            history = [];
+            historyIndex = -1;
+            saveToHistory();
+            drawGrid();
+            updatePreview();
+        }
+        
+        function initializeColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.innerHTML = '';
+            
+            defaultColors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.onclick = () => selectColor(color, swatch);
+                palette.appendChild(swatch);
+            });
+            
+            // 預設選擇黑色
+            palette.firstChild.classList.add('active');
+        }
+        
+        function selectColor(color, element) {
+            currentColor = color;
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            element.classList.add('active');
+        }
+        
+        function addCustomColor() {
+            const color = document.getElementById('customColor').value;
+            const palette = document.getElementById('colorPalette');
+            
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = color;
+            swatch.onclick = () => selectColor(color, swatch);
+            palette.appendChild(swatch);
+            
+            selectColor(color, swatch);
+        }
+        
+        function setupEventListeners() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+            
+            document.getElementById('canvasSize').addEventListener('change', updateCanvasSize);
+            document.getElementById('brushSize').addEventListener('input', updateBrushSize);
+            document.getElementById('fileInput').addEventListener('change', handleImageImport);
+            
+            // 鍵盤快捷鍵
+            document.addEventListener('keydown', handleKeyDown);
+        }
+        
+        function updateBrushSize() {
+            brushSize = parseInt(document.getElementById('brushSize').value);
+            document.getElementById('brushSizeDisplay').textContent = `${brushSize}x${brushSize}`;
+        }
+        
+        function getPixelPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / pixelSize);
+            const y = Math.floor((e.clientY - rect.top) / pixelSize);
+            return { x, y };
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const pos = getPixelPosition(e);
+            let hasChanges = false;
+            
+            for (let dx = 0; dx < brushSize; dx++) {
+                for (let dy = 0; dy < brushSize; dy++) {
+                    const x = pos.x + dx;
+                    const y = pos.y + dy;
+                    
+                    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+                        const key = `${x},${y}`;
+                        if (pixels[key] !== currentColor) {
+                            pixels[key] = currentColor;
+                            hasChanges = true;
+                            
+                            // 繪製像素
+                            ctx.fillStyle = currentColor;
+                            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                        }
+                    }
+                }
+            }
+            
+            if (hasChanges) {
+                updatePreview();
+            }
+        }
+        
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                saveToHistory(); // 繪製結束後儲存狀態
+            }
+        }
+        
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製網格
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= gridSize; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * pixelSize, 0);
+                ctx.lineTo(i * pixelSize, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * pixelSize);
+                ctx.lineTo(canvas.width, i * pixelSize);
+                ctx.stroke();
+            }
+            
+            // 重新繪製所有像素
+            for (const [key, color] of Object.entries(pixels)) {
+                const [x, y] = key.split(',').map(Number);
+                ctx.fillStyle = color;
+                ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+            }
+        }
+        
+        function updatePreview() {
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            
+            const previewPixelSize = Math.floor(160 / gridSize);
+            
+            for (const [key, color] of Object.entries(pixels)) {
+                const [x, y] = key.split(',').map(Number);
+                previewCtx.fillStyle = color;
+                previewCtx.fillRect(x * previewPixelSize, y * previewPixelSize, previewPixelSize, previewPixelSize);
+            }
+        }
+        
+        function clearCanvas() {
+            pixels = {};
+            drawGrid();
+            updatePreview();
+            saveToHistory();
+        }
+        
+        function fillCanvas() {
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    pixels[`${x},${y}`] = currentColor;
+                }
+            }
+            drawGrid();
+            updatePreview();
+            saveToHistory();
+        }
+        
+        // 歷史記錄相關函數
+        function saveToHistory() {
+            // 移除目前位置後面的歷史記錄
+            history = history.slice(0, historyIndex + 1);
+            
+            // 深度複製目前狀態
+            const state = JSON.parse(JSON.stringify(pixels));
+            history.push(state);
+            
+            // 限制歷史記錄大小
+            if (history.length > maxHistorySize) {
+                history.shift();
+            } else {
+                historyIndex++;
+            }
+            
+            updateHistoryButtons();
+        }
+        
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                pixels = JSON.parse(JSON.stringify(history[historyIndex]));
+                drawGrid();
+                updatePreview();
+                updateHistoryButtons();
+            }
+        }
+        
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                pixels = JSON.parse(JSON.stringify(history[historyIndex]));
+                drawGrid();
+                updatePreview();
+                updateHistoryButtons();
+            }
+        }
+        
+        function updateHistoryButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+        
+        function handleKeyDown(e) {
+            // Ctrl+Z 或 Cmd+Z 復原
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+            // Ctrl+Y 或 Ctrl+Shift+Z 或 Cmd+Y 或 Cmd+Shift+Z 重做
+            else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || 
+                     ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
+                e.preventDefault();
+                redo();
+            }
+        }
+        
+        function generateCSS() {
+            let css = `.pixel-art {\n  width: ${gridSize}px;\n  height: ${gridSize}px;\n  background: \n`;
+            
+            const shadows = [];
+            for (const [key, color] of Object.entries(pixels)) {
+                const [x, y] = key.split(',').map(Number);
+                shadows.push(`    ${x}px ${y}px 0 ${color}`);
+            }
+            
+            css += shadows.join(',\n');
+            css += ';\n  box-shadow: \n';
+            css += shadows.join(',\n');
+            css += ';\n}';
+            
+            const output = document.getElementById('codeOutput');
+            output.textContent = css;
+            output.style.display = 'block';
+        }
+        
+        function generateHTML() {
+            let html = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n';
+            
+            // CSS 部分
+            html += '.pixel-art {\n';
+            html += `  width: 1px;\n  height: 1px;\n  background: transparent;\n`;
+            
+            const shadows = [];
+            for (const [key, color] of Object.entries(pixels)) {
+                const [x, y] = key.split(',').map(Number);
+                shadows.push(`${x}px ${y}px 0 ${color}`);
+            }
+            
+            html += `  box-shadow: ${shadows.join(', ')};\n`;
+            html += '  transform: scale(10);\n';
+            html += '  transform-origin: 0 0;\n';
+            html += '  image-rendering: pixelated;\n';
+            html += '}\n\n';
+            
+            html += '.container {\n';
+            html += '  margin: 50px;\n';
+            html += '  display: inline-block;\n';
+            html += '}\n';
+            
+            html += '</style>\n</head>\n<body>\n';
+            html += '<div class="container">\n';
+            html += '  <div class="pixel-art"></div>\n';
+            html += '</div>\n</body>\n</html>';
+            
+            const output = document.getElementById('codeOutput');
+            output.textContent = html;
+            output.style.display = 'block';
+        }
+        
+        function exportPNG() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = gridSize;
+            exportCanvas.height = gridSize;
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            // 設定透明背景
+            exportCtx.clearRect(0, 0, gridSize, gridSize);
+            
+            for (const [key, color] of Object.entries(pixels)) {
+                const [x, y] = key.split(',').map(Number);
+                exportCtx.fillStyle = color;
+                exportCtx.fillRect(x, y, 1, 1);
+            }
+            
+            const link = document.createElement('a');
+            link.download = 'pixel-art.png';
+            link.href = exportCanvas.toDataURL();
+            link.click();
+        }
+        
+        function importImage() {
+            document.getElementById('fileInput').click();
+        }
+        
+        function handleImageImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const img = new Image();
+            img.onload = function() {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = gridSize;
+                tempCanvas.height = gridSize;
+                
+                tempCtx.drawImage(img, 0, 0, gridSize, gridSize);
+                
+                const imageData = tempCtx.getImageData(0, 0, gridSize, gridSize);
+                pixels = {};
+                
+                for (let x = 0; x < gridSize; x++) {
+                    for (let y = 0; y < gridSize; y++) {
+                        const index = (y * gridSize + x) * 4;
+                        const r = imageData.data[index];
+                        const g = imageData.data[index + 1];
+                        const b = imageData.data[index + 2];
+                        const a = imageData.data[index + 3];
+                        
+                        if (a > 128) { // 只有不透明的像素
+                            const color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                            pixels[`${x},${y}`] = color;
+                        }
+                    }
+                }
+                
+                drawGrid();
+                updatePreview();
+                saveToHistory();
+            };
+            
+            img.src = URL.createObjectURL(file);
+        }
+        
+        // 初始化
+        initializeCanvas();
+    </script>
+</body>
+</html>
