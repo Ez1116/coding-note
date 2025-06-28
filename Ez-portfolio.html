@@ -384,22 +384,22 @@
         /* Mobile Timeline Styles */
         @media (max-width: 768px) {
             .timeline-line {
-                left: 30px;
+                left: 15px;
             }
             
             .timeline-item {
                 justify-content: flex-start !important;
-                margin-bottom: 60px;
+                margin-bottom: 50px;
             }
             
             .timeline-marker {
-                left: 30px;
+                left: 15px;
             }
             
             .timeline-card {
-                width: calc(100% - 80px);
-                margin-left: 60px;
-                margin-right: 20px;
+                width: calc(100% - 45px);
+                margin-left: 35px;
+                margin-right: 10px;
             }
         }
         
@@ -610,7 +610,8 @@
             }
             
             .section-title {
-                font-size: 1.5rem;
+                font-size: 1.6rem;
+                margin-bottom: 40px;
             }
             
             .nav-bar {
@@ -655,23 +656,72 @@
                 align-items: center;
             }
             
-            /* 手機版調整 Honors 和 Publications 的頂部間距 */
-            #honors, #publications {
+            /* 手機版調整 Publications 的頂部間距 */
+            #publications {
                 padding-top: 80px;
+            }
+            
+            .content-card .card-content {
+                padding: 30px 25px;
+            }
+            
+            .publication-item {
+                font-size: 0.95rem;
+                line-height: 1.7;
+                margin-bottom: 25px;
+            }
+            
+            .page-title {
+                font-size: clamp(1.8rem, 6vw, 2.5rem);
+                margin-bottom: 40px;
             }
             
             /* 手機版hero調整 */
             .hero-section {
-                padding: 30px 15px;
+                padding: 40px 20px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .main-text {
+                font-size: clamp(1.1rem, 4vw, 1.8rem);
+                line-height: 1.8;
+                padding: 0 10px;
+            }
+            
+            .intro-text {
+                font-size: 13px;
+                margin-bottom: 25px;
             }
             
             /* 手機版timeline調整 */
             .timeline-card .card-content {
-                padding: 25px 20px;
+                padding: 30px 25px;
             }
             
             .timeline-card .card-shadow {
                 transform: translateY(3px) translateX(3px);
+            }
+            
+            .job-title {
+                font-size: 1.3rem;
+            }
+            
+            .date {
+                font-size: 0.95rem;
+            }
+            
+            .company {
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+            
+            .work-details li {
+                font-size: 0.95rem;
+                line-height: 1.7;
+                margin-bottom: 12px;
             }
             
             .work-card .card-content {
