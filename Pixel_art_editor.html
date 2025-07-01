@@ -176,6 +176,33 @@
             margin-top: 20px;
             margin-bottom: 10px;
         }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .copy-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .copy-feedback.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -221,8 +248,8 @@
             </div>
             
             <div class="button-group">
-                <button onclick="undo()" class="btn-secondary" id="undoBtn" disabled>復原</button>
-                <button onclick="redo()" class="btn-secondary" id="redoBtn" disabled>重做</button>
+                <button onclick="undo()" class="btn-secondary" id="undoBtn" disabled title="復原到上一個狀態">上一步</button>
+                <button onclick="redo()" class="btn-secondary" id="redoBtn" disabled title="重做到下一個狀態">下一步</button>
             </div>
             
             <div class="button-group">
@@ -243,6 +270,10 @@
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
             
             <div id="codeOutput" class="code-output" style="display: none;"></div>
+            
+            <div class="button-group" id="copyButtonGroup" style="display: none;">
+                <button onclick="copyCode()" class="btn-primary" id="copyBtn">複製程式碼</button>
+            </div>
         </div>
     </div>
 
@@ -530,6 +561,10 @@
             const output = document.getElementById('codeOutput');
             output.textContent = css;
             output.style.display = 'block';
+            
+            // 顯示複製按鈕
+            const copyButtonGroup = document.getElementById('copyButtonGroup');
+            copyButtonGroup.style.display = 'flex';
         }
         
         function generateHTML() {
@@ -564,6 +599,10 @@
             const output = document.getElementById('codeOutput');
             output.textContent = html;
             output.style.display = 'block';
+            
+            // 顯示複製按鈕
+            const copyButtonGroup = document.getElementById('copyButtonGroup');
+            copyButtonGroup.style.display = 'flex';
         }
         
         function exportPNG() {
@@ -629,6 +668,65 @@
             };
             
             img.src = URL.createObjectURL(file);
+        }
+        
+        // 複製程式碼功能
+        function copyCode() {
+            const codeOutput = document.getElementById('codeOutput');
+            const text = codeOutput.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyFeedback('程式碼已複製到剪貼板！');
+                
+                // 暫時改變按鈕樣式表示成功
+                const copyBtn = document.getElementById('copyBtn');
+                const originalClass = copyBtn.className;
+                copyBtn.className = 'btn-success';
+                copyBtn.textContent = '已複製！';
+                
+                setTimeout(function() {
+                    copyBtn.className = originalClass;
+                    copyBtn.textContent = '複製程式碼';
+                }, 2000);
+                
+            }).catch(function(err) {
+                showCopyFeedback('複製失敗，請手動選取複製', 'error');
+                console.error('複製失敗: ', err);
+            });
+        }
+        
+        function showCopyFeedback(message, type = 'success') {
+            // 移除現有的反饋元素
+            const existingFeedback = document.querySelector('.copy-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // 創建反饋元素
+            const feedback = document.createElement('div');
+            feedback.className = 'copy-feedback';
+            feedback.textContent = message;
+            
+            if (type === 'error') {
+                feedback.style.backgroundColor = '#dc3545';
+            }
+            
+            document.body.appendChild(feedback);
+            
+            // 觸發顯示動畫
+            setTimeout(() => {
+                feedback.classList.add('show');
+            }, 10);
+            
+            // 3秒後隱藏並移除
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        feedback.parentNode.removeChild(feedback);
+                    }
+                }, 300);
+            }, 3000);
         }
         
         // 初始化
