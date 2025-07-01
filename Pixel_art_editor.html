@@ -244,7 +244,10 @@
             <div class="custom-color">
                 <label>自訂顏色:</label>
                 <input type="color" id="customColor" value="#000000">
-                <button onclick="addCustomColor()" class="btn-primary">加入調色盤</button>
+                <div class="button-group">
+                    <button onclick="addCustomColor()" class="btn-primary">加入調色盤</button>
+                    <button onclick="removeSelectedColor()" class="btn-danger">移除調色盤</button>
+                </div>
             </div>
             
             <div class="button-group">
@@ -353,9 +356,50 @@
             swatch.className = 'color-swatch';
             swatch.style.backgroundColor = color;
             swatch.onclick = () => selectColor(color, swatch);
+            swatch.setAttribute('data-custom', 'true'); // Mark as custom color
             palette.appendChild(swatch);
             
             selectColor(color, swatch);
+        }
+        
+        function removeSelectedColor() {
+            const activeSwatch = document.querySelector('.color-swatch.active');
+            
+            if (!activeSwatch) {
+                showCopyFeedback('請先選擇要移除的顏色', 'error');
+                return;
+            }
+            
+            // Check if it's a custom color (has data-custom attribute)
+            if (!activeSwatch.hasAttribute('data-custom')) {
+                showCopyFeedback('無法移除預設顏色', 'error');
+                return;
+            }
+            
+            // Remove the color swatch
+            activeSwatch.remove();
+            
+            // Select the first default color (black) as fallback
+            const firstSwatch = document.querySelector('.color-swatch');
+            if (firstSwatch) {
+                const firstColor = firstSwatch.style.backgroundColor;
+                // Convert rgb to hex if needed
+                const hexColor = rgbToHex(firstColor) || '#000000';
+                selectColor(hexColor, firstSwatch);
+                showCopyFeedback('顏色已從調色盤移除');
+            }
+        }
+        
+        function rgbToHex(rgb) {
+            // Handle rgb(r, g, b) format
+            const result = rgb.match(/\d+/g);
+            if (result && result.length >= 3) {
+                const r = parseInt(result[0]);
+                const g = parseInt(result[1]);
+                const b = parseInt(result[2]);
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+            return rgb; // If already hex or other format
         }
         
         function setupEventListeners() {
