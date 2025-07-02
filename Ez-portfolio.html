@@ -563,8 +563,29 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 25px 0;
+            padding: 25px 40px;
             border-top: 3px solid #1f2937;
+            gap: 60px;
+        }
+        
+        .footer-decoration {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pixel-art-decoration {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(31, 41, 55, 0.2));
+        }
+        
+        .pixel-art-decoration:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 6px 12px rgba(31, 41, 55, 0.3));
         }
         
         .footer-links {
@@ -644,6 +665,17 @@
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
+                padding: 25px 20px;
+                gap: 30px;
+            }
+            
+            .footer-decoration {
+                order: -1;
+            }
+            
+            .pixel-art-decoration {
+                width: 60px;
+                height: 60px;
             }
             
             .footer-links {
@@ -882,6 +914,9 @@
         <!-- Footer 聯絡資料 -->
         <div class="footer-section">
             <div class="footer-content">
+                <div class="footer-decoration">
+                    <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="pixel-art-decoration">
+                </div>
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
@@ -915,6 +950,9 @@
         <!-- Footer 聯絡資料 -->
         <div class="footer-section">
             <div class="footer-content">
+                <div class="footer-decoration">
+                    <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="pixel-art-decoration">
+                </div>
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
