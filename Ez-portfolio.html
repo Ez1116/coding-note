@@ -69,6 +69,30 @@
             font-weight: 800;
         }
         
+        /* 左上角固定裝飾 */
+        .corner-decoration {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 999;
+            pointer-events: none;
+        }
+        
+        .corner-pixel-art {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(31, 41, 55, 0.2));
+            pointer-events: auto;
+        }
+        
+        .corner-pixel-art:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 6px 12px rgba(31, 41, 55, 0.3));
+        }
+        
         /* 頁面容器 */
         .page {
             position: absolute;
@@ -563,30 +587,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 25px 40px;
+            padding: 25px 0;
             border-top: 3px solid #1f2937;
-            gap: 60px;
         }
         
-        .footer-decoration {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .pixel-art-decoration {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            filter: drop-shadow(0 4px 8px rgba(31, 41, 55, 0.2));
-        }
-        
-        .pixel-art-decoration:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 6px 12px rgba(31, 41, 55, 0.3));
-        }
         
         .footer-links {
             display: flex;
@@ -661,28 +665,21 @@
                 font-size: 36px;
             }
             
+            .corner-decoration {
+                top: 15px;
+                left: 15px;
+            }
+            
+            .corner-pixel-art {
+                width: 45px;
+                height: 45px;
+            }
+            
             .footer-content {
                 flex-direction: column;
-                justify-content: flex-start;
                 align-items: center;
                 text-align: center;
                 padding: 25px 20px;
-                gap: 20px;
-            }
-            
-            .footer-section {
-                position: relative;
-                bottom: auto;
-                padding: 30px 20px;
-            }
-            
-            .footer-decoration {
-                order: -1;
-            }
-            
-            .pixel-art-decoration {
-                width: 60px;
-                height: 60px;
             }
             
             .footer-links {
@@ -782,6 +779,11 @@
     </style>
 </head>
 <body>
+    <!-- 左上角固定裝飾 -->
+    <div class="corner-decoration">
+        <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="corner-pixel-art">
+    </div>
+    
     <!-- 導航欄 -->
     <nav class="nav-bar" id="navBar">
         <button class="nav-btn active" onclick="showPage('home')">Home</button>
@@ -921,9 +923,6 @@
         <!-- Footer 聯絡資料 -->
         <div class="footer-section">
             <div class="footer-content">
-                <div class="footer-decoration">
-                    <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="pixel-art-decoration">
-                </div>
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
@@ -957,9 +956,6 @@
         <!-- Footer 聯絡資料 -->
         <div class="footer-section">
             <div class="footer-content">
-                <div class="footer-decoration">
-                    <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="pixel-art-decoration">
-                </div>
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
