@@ -96,8 +96,8 @@
         /* Get in Touch button */
         .get-in-touch-btn {
             position: fixed;
-            top: 95px;
-            left: 20px;
+            top: 20px;
+            left: 100px;
             z-index: 999;
             background: white;
             border: 2px solid #1f2937;
@@ -113,6 +113,14 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .get-in-touch-btn.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
         }
         
         .get-in-touch-btn:hover {
@@ -709,8 +717,8 @@
             }
             
             .get-in-touch-btn {
-                top: 75px;
-                left: 15px;
+                top: 15px;
+                left: 75px;
                 padding: 10px 20px;
                 font-size: 13px;
                 border-radius: 20px;
@@ -1014,23 +1022,33 @@
         
         let lastScrollY = 0;
         let isNavVisible = true;
+        let isButtonVisible = true;
         
         // 滾動監聽器
         function handleScroll() {
             const navBar = document.getElementById('navBar');
+            const getInTouchBtn = document.querySelector('.get-in-touch-btn');
             const currentScrollY = window.scrollY;
             
-            // 如果在頁面頂部附近（20px 以內），顯示導航
+            // 如果在頁面頂部附近（20px 以內），顯示導航和按鈕
             if (currentScrollY <= 20) {
                 if (!isNavVisible) {
                     navBar.classList.remove('hidden');
                     isNavVisible = true;
                 }
+                if (!isButtonVisible) {
+                    getInTouchBtn.classList.remove('hidden');
+                    isButtonVisible = true;
+                }
             } else {
-                // 如果不在頂部，隱藏導航
+                // 如果不在頂部，隱藏導航和按鈕
                 if (isNavVisible) {
                     navBar.classList.add('hidden');
                     isNavVisible = false;
+                }
+                if (isButtonVisible) {
+                    getInTouchBtn.classList.add('hidden');
+                    isButtonVisible = false;
                 }
             }
             
@@ -1070,11 +1088,14 @@
                     currentPage.classList.remove('sliding-out');
                     newPage.classList.add('active');
                     
-                    // 切換頁面後回到頂部並顯示導航
+                    // 切換頁面後回到頂部並顯示導航和按鈕
                     window.scrollTo(0, 0);
                     const navBar = document.getElementById('navBar');
+                    const getInTouchBtn = document.querySelector('.get-in-touch-btn');
                     navBar.classList.remove('hidden');
+                    getInTouchBtn.classList.remove('hidden');
                     isNavVisible = true;
+                    isButtonVisible = true;
                     
                     // 如果切換到主頁且已經播放過動畫，直接顯示完成狀態
                     if (pageName === 'home' && hasAnimated) {
