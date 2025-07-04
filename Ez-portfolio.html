@@ -93,6 +93,39 @@
             filter: drop-shadow(0 6px 12px rgba(31, 41, 55, 0.3));
         }
         
+        /* Get in Touch button */
+        .get-in-touch-btn {
+            position: fixed;
+            top: 95px;
+            left: 20px;
+            z-index: 999;
+            background: white;
+            border: 2px solid #1f2937;
+            border-radius: 25px;
+            padding: 12px 24px;
+            text-decoration: none;
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(31, 41, 55, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .get-in-touch-btn:hover {
+            background: #4A90E2;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(74, 144, 226, 0.3);
+        }
+        
+        .get-in-touch-btn:active {
+            transform: translateY(0);
+        }
+        
         /* 頁面容器 */
         .page {
             position: absolute;
@@ -675,6 +708,14 @@
                 height: 45px;
             }
             
+            .get-in-touch-btn {
+                top: 75px;
+                left: 15px;
+                padding: 10px 20px;
+                font-size: 13px;
+                border-radius: 20px;
+            }
+            
             .footer-content {
                 flex-direction: column;
                 align-items: center;
@@ -783,6 +824,11 @@
     <div class="corner-decoration">
         <img src="pixel-art.jpg" alt="Pixel Art Decoration" class="corner-pixel-art">
     </div>
+    
+    <!-- Get in Touch button -->
+    <a href="mailto:easy0110111@gmail.com" class="get-in-touch-btn">
+        Get in Touch
+    </a>
     
     <!-- 導航欄 -->
     <nav class="nav-bar" id="navBar">
@@ -926,10 +972,6 @@
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
-                    <div class="contact-info">
-                        <a href="mailto:easy0110111@gmail.com" class="contact-email">easy0110111@gmail.com</a>
-                        <a href="mailto:ezlin@ntnu.edu.tw" class="contact-email">ezlin@ntnu.edu.tw</a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -959,10 +1001,6 @@
                 <div class="footer-links">
                     <a href="https://github.com/Ez1116/coding-note" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
                     <a href="https://lineasy.notion.site/EZ-s-Notion-215046aebb5b8049950dec25750c03fb?source=copy_link" target="_blank" rel="noopener noreferrer" class="footer-link">Notion</a>
-                    <div class="contact-info">
-                        <a href="mailto:easy0110111@gmail.com" class="contact-email">easy0110111@gmail.com</a>
-                        <a href="mailto:ezlin@ntnu.edu.tw" class="contact-email">ezlin@ntnu.edu.tw</a>
-                    </div>
                 </div>
             </div>
         </div>
