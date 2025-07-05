@@ -713,6 +713,11 @@
                     <button class="btn btn-secondary" onclick="exportPDF()">Export PDF</button>
                 </div>
                 
+                <div class="button-group" style="margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="exportLabelConfig()">Export Label Config</button>
+                    <button class="btn btn-secondary" onclick="importLabelConfig()">Import Label Config</button>
+                </div>
+                
                 <div id="scoreSelector" class="score-selector">
                     <h4>Rating (Optional)</h4>
                     <div id="scoringTextPreview" class="scoring-text-preview"></div>
@@ -2553,6 +2558,70 @@
             });
         }
         
+        // Export label configuration
+        function exportLabelConfig() {
+            const config = {
+                labelConfiguration: labelConfiguration,
+                exportDate: new Date().toISOString(),
+                version: "1.0"
+            };
+            
+            const dataStr = JSON.stringify(config, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'label-config.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Import label configuration
+        function importLabelConfig() {
+            const fileInput = document.getElementById('labelConfigFileInput');
+            fileInput.click();
+            
+            fileInput.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedConfig = JSON.parse(e.target.result);
+                        
+                        // Validate the imported configuration
+                        if (importedConfig.labelConfiguration && 
+                            typeof importedConfig.labelConfiguration === 'object' &&
+                            Array.isArray(importedConfig.labelConfiguration.categories) &&
+                            typeof importedConfig.labelConfiguration.enableScoring === 'boolean') {
+                            
+                            labelConfiguration = importedConfig.labelConfiguration;
+                            
+                            // Save to localStorage
+                            localStorage.setItem('labelConfiguration', JSON.stringify(labelConfiguration));
+                            
+                            // Update UI
+                            generateLabelInterface();
+                            updateDynamicCSS();
+                            
+                            alert('Label configuration imported successfully!');
+                        } else {
+                            console.error('Invalid config structure:', importedConfig);
+                            alert('Invalid configuration file format. Please check the file structure.');
+                        }
+                    } catch (error) {
+                        alert('Error reading configuration file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Clear the file input
+                fileInput.value = '';
+            };
+        }
+        
         // Populate configuration modal
         function populateConfigModal() {
             // Set global settings
@@ -2759,5 +2828,8 @@
             }
         }
     </script>
+    
+    <!-- Hidden file input for importing label config -->
+    <input type="file" id="labelConfigFileInput" accept=".json" style="display: none;">
 </body>
 </html>
