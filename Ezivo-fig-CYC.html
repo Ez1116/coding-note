@@ -946,6 +946,7 @@
             <h2>Import Images</h2>
             <p style="margin: 10px 0;">Please select one or more image files to analyze:</p>
             <input type="file" id="imageInput" accept="image/*" multiple style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px;">
+            <input type="file" id="labelConfigFileInput" accept=".json" style="display: none;">
             
             <div id="imagePreview" style="max-width: 100%; max-height: 300px; overflow: hidden; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; display: none;">
                 <img id="previewImg" style="max-width: 100%; height: auto;">
@@ -999,6 +1000,8 @@
             <div class="button-group" style="justify-content: flex-end; margin-top: 30px;">
                 <button class="btn btn-primary" onclick="saveConfiguration()">Save Configuration</button>
                 <button class="btn btn-secondary" onclick="resetToDefault()">Reset to Default</button>
+                <button class="btn btn-secondary" onclick="exportLabelConfig()">Export Label Config</button>
+                <button class="btn btn-secondary" onclick="importLabelConfig()">Import Label Config</button>
                 <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
             </div>
         </div>
@@ -1089,6 +1092,18 @@
             generateLabelInterface();
         }
         
+        // Helper function to transform mouse coordinates accounting for canvas scaling
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            return { x, y };
+        }
+        
         // Initialize canvas and event listeners
         function initializeCanvas() {
             canvas = document.getElementById('imageCanvas');
@@ -1113,9 +1128,9 @@
                 draw(e);
             } else if (loadedImages.length > 0) {
                 // Handle hover effects for selection
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                const coordinates = getCanvasCoordinates(e);
+                const x = coordinates.x;
+                const y = coordinates.y;
                 
                 const hoveredAnnotation = findAnnotationAtPosition(x, y);
                 
@@ -1344,17 +1359,17 @@
             if (loadedImages.length === 0) return;
             
             isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
+            const coordinates = getCanvasCoordinates(e);
+            startX = coordinates.x;
+            startY = coordinates.y;
         }
         
         function draw(e) {
             if (!isDrawing || loadedImages.length === 0) return;
             
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
+            const coordinates = getCanvasCoordinates(e);
+            const currentX = coordinates.x;
+            const currentY = coordinates.y;
             
             // For line and rectangle tools, show preview
             if (currentTool === 'line' || currentTool === 'rectangle') {
@@ -1367,9 +1382,9 @@
             if (!isDrawing || loadedImages.length === 0) return;
             
             isDrawing = false;
-            const rect = canvas.getBoundingClientRect();
-            const endX = e.clientX - rect.left;
-            const endY = e.clientY - rect.top;
+            const coordinates = getCanvasCoordinates(e);
+            const endX = coordinates.x;
+            const endY = coordinates.y;
             
             // Create annotation object
             const annotation = {
@@ -1487,9 +1502,9 @@
             // Don't select during drawing
             if (isDrawing) return;
             
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const coordinates = getCanvasCoordinates(e);
+            const x = coordinates.x;
+            const y = coordinates.y;
             
             // Find annotation at click position
             const clickedAnnotation = findAnnotationAtPosition(x, y);
@@ -3690,6 +3705,77 @@
                 populateConfigModal();
                 alert('Configuration reset to default.');
             }
+        }
+        
+        function exportLabelConfig() {
+            const exportData = {
+                labelConfiguration: labelConfiguration,
+                exportDate: new Date().toISOString(),
+                version: "1.0"
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'label-config.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        function importLabelConfig() {
+            const fileInput = document.getElementById('labelConfigFileInput');
+            fileInput.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        // Validate the imported data structure
+                        if (!importedData.labelConfiguration || !importedData.labelConfiguration.categories) {
+                            alert('Invalid configuration file format. Please ensure the file contains a valid label configuration.');
+                            return;
+                        }
+                        
+                        // Validate categories structure
+                        const categories = importedData.labelConfiguration.categories;
+                        if (!Array.isArray(categories)) {
+                            alert('Invalid configuration file format. Categories must be an array.');
+                            return;
+                        }
+                        
+                        // Validate each category has required fields
+                        for (let category of categories) {
+                            if (!category.id || !category.name || !category.color || !Array.isArray(category.tags)) {
+                                alert('Invalid configuration file format. Each category must have id, name, color, and tags.');
+                                return;
+                            }
+                        }
+                        
+                        // Apply the imported configuration
+                        labelConfiguration = importedData.labelConfiguration;
+                        
+                        // Save to localStorage
+                        localStorage.setItem('labelConfiguration', JSON.stringify(labelConfiguration));
+                        
+                        // Regenerate the interface
+                        generateLabelInterface();
+                        populateConfigModal();
+                        
+                        alert('Configuration imported successfully!');
+                        
+                    } catch (error) {
+                        alert('Error parsing configuration file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
         }
         
         // Add real-time preview for filename input
