@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>實驗數據作圖-龍門國中小p老師設計</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 使用 Google Fonts 的 Noto Sans TC 字體 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        html, body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f2f5;
+            overflow: hidden; /* 禁用頁面主滾動條 */
+        }
+        /* 自訂樣式 */
+        .group-active-radio:checked { background-color: #2563eb; border-color: #2563eb; }
+        .color-input::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+        canvas { cursor: crosshair; }
+        .canvas-bg-white { background-color: white; }
+        /* 美化滾動條 */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="h-full text-gray-800">
+
+    <!-- 全螢幕佈局容器 -->
+    <div class="h-screen flex flex-col p-4 lg:p-6 gap-4">
+        <!-- 應用程式標題 (固定高度) -->
+        <header class="text-center flex-shrink-0">
+            <h1 class="text-3xl lg:text-4xl font-bold text-gray-700">實驗數據作圖-龍門國中小p老師設計</h1>
+            <p class="text-md text-gray-500 mt-1">模擬手繪實驗數據，點擊圖表即可新增數據點</p>
+        </header>
+
+        <!-- 主內容區 (填滿剩餘空間) -->
+        <main class="flex-grow grid grid-cols-1 lg:grid-cols-8 gap-6 overflow-hidden">
+
+            <!-- 左側：圖表與功能區 (固定不滾動) -->
+            <div class="lg:col-span-5 flex flex-col h-full">
+                <div class="bg-white p-4 rounded-xl shadow-lg h-full flex flex-col">
+                    <!-- 畫布容器 (自動伸展) -->
+                    <div class="relative w-full flex-grow">
+                        <canvas id="chart-canvas" class="absolute top-0 left-0 w-full h-full rounded-lg border border-gray-300 canvas-bg-white"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右側：設定與數據面板 (內部可滾動) -->
+            <div class="lg:col-span-3 space-y-6 overflow-y-auto custom-scrollbar pr-3">
+                <!-- 設定面板 -->
+                <div class="bg-white p-5 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">圖表設定</h2>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label for="chart-title" class="block text-sm font-medium text-gray-600">圖表標題</label>
+                            <input type="text" id="chart-title" value="1.填入適當的圖表標題" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700">橫軸設定</h3>
+                        <div>
+                            <label for="x-axis-label" class="block text-sm font-medium text-gray-600">項目名稱</label>
+                            <input type="text" id="x-axis-label" value="2.填入操作變因(單位)，設定範圍與刻度" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="x-axis-min" class="block text-sm font-medium text-gray-600">最小值</label>
+                                <input type="number" id="x-axis-min" value="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                            <div>
+                                <label for="x-axis-max" class="block text-sm font-medium text-gray-600">最大值</label>
+                                <input type="number" id="x-axis-max" value="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="x-axis-unit" class="block text-sm font-medium text-gray-600">每格單位</label>
+                            <input type="number" id="x-axis-unit" value="10" min="0.5" step="0.5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700">縱軸設定</h3>
+                        <div>
+                            <label for="y-axis-label" class="block text-sm font-medium text-gray-600">項目名稱</label>
+                            <input type="text" id="y-axis-label" value="3.填入應變變因(單位)，設定範圍與刻度" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        </div>
+                         <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="y-axis-min" class="block text-sm font-medium text-gray-600">最小值</label>
+                                <input type="number" id="y-axis-min" value="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                            <div>
+                                <label for="y-axis-max" class="block text-sm font-medium text-gray-600">最大值</label>
+                                <input type="number" id="y-axis-max" value="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="y-axis-unit" class="block text-sm font-medium text-gray-600">每格單位</label>
+                            <input type="number" id="y-axis-unit" value="5" min="0.5" step="0.5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        </div>
+                    </div>
+                    <button id="apply-settings" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-4">套用設定(會清空數據)</button>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">點擊圖表區加入實驗數據點</h3>
+                    <div id="groups-container" class="space-y-3">
+                        <!-- JavaScript 會在這裡動態生成 4 組設定 -->
+                    </div>
+                    <button id="download-chart" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors mt-6">下載圖表 (PNG)</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM 元素 ---
+            const canvas = document.getElementById('chart-canvas');
+            const ctx = canvas.getContext('2d');
+            const chartTitleInput = document.getElementById('chart-title');
+            const xAxisLabelInput = document.getElementById('x-axis-label');
+            const xAxisMinInput = document.getElementById('x-axis-min');
+            const xAxisMaxInput = document.getElementById('x-axis-max');
+            const xAxisUnitInput = document.getElementById('x-axis-unit');
+            const yAxisLabelInput = document.getElementById('y-axis-label');
+            const yAxisMinInput = document.getElementById('y-axis-min');
+            const yAxisMaxInput = document.getElementById('y-axis-max');
+            const yAxisUnitInput = document.getElementById('y-axis-unit');
+            const groupsContainer = document.getElementById('groups-container');
+            const applyBtn = document.getElementById('apply-settings');
+            const downloadBtn = document.getElementById('download-chart');
+
+            // --- 初始設定與狀態 ---
+            const MAX_GROUPS = 4;
+            const defaultGroupSettings = [
+                { name: '實驗 A', color: '#3b82f6', shape: 'circle', enabled: true, trendline: { visible: false, m: 0, b: 0, r2: 0, forceOrigin: false, showEquation: false, showR2: false } },
+                { name: '實驗 B', color: '#ef4444', shape: 'square', enabled: false, trendline: { visible: false, m: 0, b: 0, r2: 0, forceOrigin: false, showEquation: false, showR2: false } },
+                { name: '實驗 C', color: '#22c55e', shape: 'triangle', enabled: false, trendline: { visible: false, m: 0, b: 0, r2: 0, forceOrigin: false, showEquation: false, showR2: false } },
+                { name: '實驗 D', color: '#f97316', shape: 'cross', enabled: false, trendline: { visible: false, m: 0, b: 0, r2: 0, forceOrigin: false, showEquation: false, showR2: false } }
+            ];
+
+            let chartState = {
+                title: '實驗數據關係圖',
+                xAxis: { label: '操作變因', min: 0, max: 100, unit: 10 },
+                yAxis: { label: '應變變因', min: 0, max: 50, unit: 5 },
+                groups: JSON.parse(JSON.stringify(defaultGroupSettings)),
+                dataPoints: [],
+                activeGroupIndex: 0
+            };
+            
+            const padding = { top: 60, right: 150, bottom: 60, left: 70 };
+
+            // --- 函數 ---
+            function initializeGroupSettings() {
+                groupsContainer.innerHTML = '';
+                for (let i = 0; i < MAX_GROUPS; i++) {
+                    const group = chartState.groups[i];
+                    const trendline = group.trendline;
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'p-3 border rounded-lg flex flex-col space-y-3';
+                    groupDiv.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <input type="radio" name="active-group" class="form-radio h-5 w-5 text-blue-600 group-active-radio focus:ring-blue-500" data-index="${i}" ${i === chartState.activeGroupIndex ? 'checked' : ''}>
+                            <input type="checkbox" class="form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500" data-index="${i}" data-type="group-enabled" ${group.enabled ? 'checked' : ''}>
+                            <input type="text" value="${group.name}" class="text-sm flex-grow rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" data-index="${i}">
+                            <input type="color" value="${group.color}" class="w-8 h-8 rounded-full border-none cursor-pointer color-input" data-index="${i}">
+                            <select class="text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" data-index="${i}">
+                                <option value="circle" ${group.shape === 'circle' ? 'selected' : ''}>圓形</option>
+                                <option value="square" ${group.shape === 'square' ? 'selected' : ''}>方形</option>
+                                <option value="triangle" ${group.shape === 'triangle' ? 'selected' : ''}>三角</option>
+                                <option value="cross" ${group.shape === 'cross' ? 'selected' : ''}>叉叉</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-3 text-sm">
+                            <button class="flex-1 py-1 px-2 rounded-md bg-gray-200 hover:bg-gray-300 transition-colors trendline-btn" data-index="${i}">
+                                ${trendline.visible ? '清除趨勢線' : '繪製趨勢線'}
+                            </button>
+                            <label class="flex items-center space-x-1">
+                                <input type="checkbox" class="form-checkbox h-4 w-4 rounded text-blue-600 focus:ring-blue-500" data-index="${i}" data-type="force-origin" ${trendline.forceOrigin ? 'checked' : ''}>
+                                <span>通過原點</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center space-x-3 text-sm">
+                            <label class="flex items-center space-x-1">
+                                <input type="checkbox" class="form-checkbox h-4 w-4 rounded text-blue-600 focus:ring-blue-500" data-index="${i}" data-type="show-equation" ${trendline.showEquation ? 'checked' : ''}>
+                                <span>顯示方程式</span>
+                            </label>
+                            <label class="flex items-center space-x-1">
+                                <input type="checkbox" class="form-checkbox h-4 w-4 rounded text-blue-600 focus:ring-blue-500" data-index="${i}" data-type="show-r2" ${trendline.showR2 ? 'checked' : ''}>
+                                <span>顯示 R²</span>
+                            </label>
+                        </div>
+                    `;
+                    groupsContainer.appendChild(groupDiv);
+                }
+
+                groupsContainer.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('change', updateGroupSettingsFromUI);
+                });
+                groupsContainer.querySelectorAll('.trendline-btn').forEach(btn => {
+                    btn.addEventListener('click', handleTrendlineButtonClick);
+                });
+            }
+
+            function handleTrendlineButtonClick(event) {
+                const index = parseInt(event.target.dataset.index);
+                const group = chartState.groups[index];
+                group.trendline.visible = !group.trendline.visible;
+
+                if (group.trendline.visible) {
+                    recalculateTrendline(index);
+                }
+                
+                const btn = groupsContainer.querySelector(`.trendline-btn[data-index="${index}"]`);
+                btn.textContent = group.trendline.visible ? '清除趨勢線' : '繪製趨勢線';
+                redrawCanvas();
+            }
+
+            function recalculateTrendline(index) {
+                const group = chartState.groups[index];
+                const points = chartState.dataPoints.filter(p => p.groupIndex === index);
+
+                if (points.length < 2) {
+                    group.trendline.visible = false;
+                    const btn = groupsContainer.querySelector(`.trendline-btn[data-index="${index}"]`);
+                    if (btn) btn.textContent = '繪製趨勢線';
+                    return;
+                }
+
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                const n = points.length;
+                points.forEach(p => {
+                    sumX += p.x;
+                    sumY += p.y;
+                    sumXY += p.x * p.y;
+                    sumX2 += p.x * p.x;
+                });
+
+                let m, b;
+                if (group.trendline.forceOrigin) {
+                    m = sumXY / sumX2;
+                    b = 0;
+                } else {
+                    m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                    b = (sumY - m * sumX) / n;
+                }
+                
+                // 計算 R²
+                let r2;
+                if (group.trendline.forceOrigin) {
+                    // 通過原點的 R² 計算
+                    let ss_res = 0; // 殘差平方和
+                    let ss_tot = 0; // 總平方和（相對於 0）
+                    points.forEach(p => {
+                        const predicted = m * p.x; // y = mx (通過原點)
+                        ss_res += Math.pow(p.y - predicted, 2);
+                        ss_tot += Math.pow(p.y, 2);
+                    });
+                    r2 = ss_tot !== 0 ? 1 - (ss_res / ss_tot) : 0;
+                } else {
+                    // 一般線性回歸的 R² 計算
+                    const meanY = sumY / n;
+                    let ss_res = 0; // 殘差平方和
+                    let ss_tot = 0; // 總平方和
+                    points.forEach(p => {
+                        const predicted = m * p.x + b;
+                        ss_res += Math.pow(p.y - predicted, 2);
+                        ss_tot += Math.pow(p.y - meanY, 2);
+                    });
+                    r2 = ss_tot !== 0 ? 1 - (ss_res / ss_tot) : 0;
+                }
+                
+                group.trendline.m = m;
+                group.trendline.b = b;
+                group.trendline.r2 = r2;
+            }
+
+
+            function updateGroupSettingsFromUI(event) {
+                const index = parseInt(event.target.dataset.index);
+                const type = event.target.type;
+                const elType = event.target.dataset.type;
+
+                if (type === 'radio') {
+                    chartState.activeGroupIndex = index;
+                } else if (elType === 'group-enabled') {
+                    chartState.groups[index].enabled = event.target.checked;
+                } else if (type === 'text') {
+                    chartState.groups[index].name = event.target.value;
+                } else if (type === 'color') {
+                    chartState.groups[index].color = event.target.value;
+                } else if (event.target.tagName.toLowerCase() === 'select') {
+                    chartState.groups[index].shape = event.target.value;
+                } else if (elType === 'force-origin') {
+                    chartState.groups[index].trendline.forceOrigin = event.target.checked;
+                    if (chartState.groups[index].trendline.visible) recalculateTrendline(index);
+                } else if (elType === 'show-equation') {
+                    chartState.groups[index].trendline.showEquation = event.target.checked;
+                } else if (elType === 'show-r2') {
+                    chartState.groups[index].trendline.showR2 = event.target.checked;
+                }
+                
+                redrawCanvas();
+            }
+
+            function dataToCanvas(x, y) {
+                const canvasWidth = canvas.parentElement.clientWidth;
+                const canvasHeight = canvas.parentElement.clientHeight;
+                const plotWidth = canvasWidth - padding.left - padding.right;
+                const plotHeight = canvasHeight - padding.top - padding.bottom;
+
+                const canvasX = padding.left + (x - chartState.xAxis.min) / (chartState.xAxis.max - chartState.xAxis.min) * plotWidth;
+                const canvasY = padding.top + plotHeight - (y - chartState.yAxis.min) / (chartState.yAxis.max - chartState.yAxis.min) * plotHeight;
+                return { x: canvasX, y: canvasY };
+            }
+
+            function canvasToData(canvasX, canvasY) {
+                const canvasWidth = canvas.parentElement.clientWidth;
+                const canvasHeight = canvas.parentElement.clientHeight;
+                const plotWidth = canvasWidth - padding.left - padding.right;
+                const plotHeight = canvasHeight - padding.top - padding.bottom;
+
+                const x = chartState.xAxis.min + (canvasX - padding.left) / plotWidth * (chartState.xAxis.max - chartState.xAxis.min);
+                const y = chartState.yAxis.min + (padding.top + plotHeight - canvasY) / plotHeight * (chartState.yAxis.max - chartState.yAxis.min);
+                return { x, y };
+            }
+            
+            function drawPoint(x, y, groupIndex) {
+                const group = chartState.groups[groupIndex];
+                const pos = dataToCanvas(x, y);
+                ctx.fillStyle = group.color;
+                ctx.strokeStyle = group.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                switch (group.shape) {
+                    case 'circle':
+                        ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(pos.x - 4, pos.y - 4, 8, 8);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(pos.x, pos.y - 5);
+                        ctx.lineTo(pos.x + 5, pos.y + 5);
+                        ctx.lineTo(pos.x - 5, pos.y + 5);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case 'cross':
+                        ctx.moveTo(pos.x - 4, pos.y - 4);
+                        ctx.lineTo(pos.x + 4, pos.y + 4);
+                        ctx.moveTo(pos.x + 4, pos.y - 4);
+                        ctx.lineTo(pos.x - 4, pos.y + 4);
+                        ctx.stroke();
+                        break;
+                }
+            }
+
+            function drawAllPoints() {
+                chartState.dataPoints.forEach(p => {
+                    if (chartState.groups[p.groupIndex].enabled) {
+                        drawPoint(p.x, p.y, p.groupIndex);
+                    }
+                });
+            }
+
+            function drawTrendlines() {
+                chartState.groups.forEach(group => {
+                    if (group.enabled && group.trendline.visible) {
+                        const { m, b, showEquation } = group.trendline;
+                        const xAxis = chartState.xAxis;
+                        const yAxis = chartState.yAxis;
+
+                        let p1 = { x: xAxis.min, y: m * xAxis.min + b };
+                        let p2 = { x: xAxis.max, y: m * xAxis.max + b };
+
+                        const clipPoint = (p) => {
+                            if (p.y < yAxis.min) {
+                                if (m !== 0) p.x = (yAxis.min - b) / m;
+                                p.y = yAxis.min;
+                            } else if (p.y > yAxis.max) {
+                                if (m !== 0) p.x = (yAxis.max - b) / m;
+                                p.y = yAxis.max;
+                            }
+                            if (p.x < xAxis.min) {
+                                p.y = m * xAxis.min + b;
+                                p.x = xAxis.min;
+                            } else if (p.x > xAxis.max) {
+                                p.y = m * xAxis.max + b;
+                                p.x = xAxis.max;
+                            }
+                            return p;
+                        };
+                        
+                        p1 = clipPoint(p1);
+                        p2 = clipPoint(p2);
+
+                        const startPoint = dataToCanvas(p1.x, p1.y);
+                        const endPoint = dataToCanvas(p2.x, p2.y);
+
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x, startPoint.y);
+                        ctx.lineTo(endPoint.x, endPoint.y);
+                        ctx.strokeStyle = group.color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        if (showEquation || group.trendline.showR2) {
+                            ctx.font = '12px "Noto Sans TC"';
+                            ctx.fillStyle = group.color;
+                            ctx.textAlign = 'right';
+                            ctx.textBaseline = 'bottom';
+
+                            let displayTexts = [];
+                            
+                            if (showEquation) {
+                                let equationText;
+                                if (group.trendline.forceOrigin) {
+                                    equationText = `y = ${m.toFixed(2)}x`;
+                                } else {
+                                    const operator = b >= 0 ? '+' : '-';
+                                    equationText = `y = ${m.toFixed(2)}x ${operator} ${Math.abs(b).toFixed(2)}`;
+                                }
+                                displayTexts.push(equationText);
+                            }
+                            
+                            if (group.trendline.showR2) {
+                                const r2Text = `R² = ${group.trendline.r2.toFixed(3)}`;
+                                displayTexts.push(r2Text);
+                            }
+                            
+                            // Position the text relative to the clipped endpoint of the line
+                            const textX = endPoint.x - 10;
+                            let textY = endPoint.y - 10;
+                            
+                            // 顯示多行文字（方程式和 R²）
+                            displayTexts.forEach((text, index) => {
+                                ctx.fillText(text, textX, textY - (index * 15));
+                            });
+                        }
+                    }
+                });
+            }
+
+            function drawGridAndAxes() {
+                const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+                const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.fillStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.font = '12px "Noto Sans TC"';
+
+                const xAxis = chartState.xAxis;
+                const yAxis = chartState.yAxis;
+
+                const xSteps = (xAxis.max - xAxis.min) / xAxis.unit;
+                for (let i = 0; i <= xSteps; i++) {
+                    const value = xAxis.min + i * xAxis.unit;
+                    const { x } = dataToCanvas(value, yAxis.min);
+                    if (x < padding.left -1 || x > canvasWidth - padding.right + 1) continue;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x, canvasHeight - padding.bottom);
+                    ctx.lineTo(x, canvasHeight - padding.bottom + 5);
+                    ctx.stroke();
+                    
+                    ctx.textAlign = 'center';
+                    ctx.fillText(Number.isInteger(value) ? value : value.toFixed(1), x, canvasHeight - padding.bottom + 20);
+
+                    if (i > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, canvasHeight - padding.bottom);
+                        ctx.lineTo(x, padding.top);
+                        ctx.stroke();
+                    }
+                }
+
+                const ySteps = (yAxis.max - yAxis.min) / yAxis.unit;
+                for (let i = 0; i <= ySteps; i++) {
+                    const value = yAxis.min + i * yAxis.unit;
+                    const { y } = dataToCanvas(xAxis.min, value);
+                    if (y < padding.top - 1 || y > canvasHeight - padding.bottom + 1) continue;
+
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left - 5, y);
+                    ctx.stroke();
+
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(Number.isInteger(value) ? value : value.toFixed(1), padding.left - 10, y);
+
+                    if (i > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(padding.left, y);
+                        ctx.lineTo(canvasWidth - padding.right, y);
+                        ctx.stroke();
+                    }
+                }
+                
+                ctx.strokeStyle = '#333';
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top);
+                ctx.lineTo(padding.left, canvasHeight - padding.bottom);
+                ctx.lineTo(canvasWidth - padding.right, canvasHeight - padding.bottom);
+                ctx.stroke();
+
+                ctx.font = 'bold 20px "Noto Sans TC"';
+                ctx.textAlign = 'center';
+                ctx.fillText(chartState.title, canvasWidth / 2, padding.top / 2);
+
+                ctx.font = '16px "Noto Sans TC"';
+                ctx.fillText(xAxis.label, canvasWidth / 2, canvasHeight - 10);
+                
+                ctx.save();
+                ctx.translate(20, canvasHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText(yAxis.label, 0, 0);
+                ctx.restore();
+            }
+
+            function drawLegend() {
+                const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+                let legendY = padding.top;
+                
+                ctx.font = '12px "Noto Sans TC"';
+                
+                chartState.groups.forEach(group => {
+                    if (group.enabled) {
+                        const legendX = canvasWidth - padding.right + 15;
+                        
+                        // Draw symbol
+                        ctx.fillStyle = group.color;
+                        ctx.strokeStyle = group.color;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+
+                        switch (group.shape) {
+                            case 'circle': ctx.arc(legendX, legendY, 5, 0, 2 * Math.PI); ctx.fill(); break;
+                            case 'square': ctx.fillRect(legendX - 4, legendY - 4, 8, 8); break;
+                            case 'triangle': ctx.moveTo(legendX, legendY - 5); ctx.lineTo(legendX + 5, legendY + 5); ctx.lineTo(legendX - 5, legendY + 5); ctx.closePath(); ctx.fill(); break;
+                            case 'cross': ctx.moveTo(legendX - 4, legendY - 4); ctx.lineTo(legendX + 4, legendY + 4); ctx.moveTo(legendX + 4, legendY - 4); ctx.lineTo(legendX - 4, legendY + 4); ctx.stroke(); break;
+                        }
+
+                        // Draw text
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#333';
+                        ctx.fillText(group.name, legendX + 15, legendY);
+
+                        legendY += 25; // spacing for next item
+                    }
+                });
+            }
+
+            function redrawCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                
+                if (rect.width === 0 || rect.height === 0) return;
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                
+                ctx.scale(dpr, dpr);
+
+                drawGridAndAxes();
+                drawAllPoints();
+                drawTrendlines();
+                drawLegend();
+            }
+
+            // --- 事件監聽 ---
+            applyBtn.addEventListener('click', () => {
+                const xMin = parseFloat(xAxisMinInput.value);
+                const xMax = parseFloat(xAxisMaxInput.value);
+                const yMin = parseFloat(yAxisMinInput.value);
+                const yMax = parseFloat(yAxisMaxInput.value);
+                const xUnit = parseFloat(xAxisUnitInput.value);
+                const yUnit = parseFloat(yAxisUnitInput.value);
+
+                if (xMin >= xMax || yMin >= yMax) {
+                    alert('最大值必須大於最小值！');
+                    return;
+                }
+                if (xUnit < 0.5 || yUnit < 0.5) {
+                    alert('每格單位至少需要 0.5！');
+                    return;
+                }
+                if ((xMax - xMin) / xUnit > 50 || (yMax - yMin) / yUnit > 50) {
+                    alert('設定的單位太小，會導致格線過於密集，請調整！');
+                    return;
+                }
+
+                chartState.title = chartTitleInput.value;
+                chartState.xAxis = { label: xAxisLabelInput.value, min: xMin, max: xMax, unit: xUnit };
+                chartState.yAxis = { label: yAxisLabelInput.value, min: yMin, max: yMax, unit: yUnit };
+                chartState.dataPoints = [];
+                chartState.groups.forEach(g => g.trendline.visible = false);
+                initializeGroupSettings();
+                
+                redrawCanvas();
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                const fileName = `${chartState.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = e.clientX - rect.left;
+                const canvasY = e.clientY - rect.top;
+                
+                const dataCoords = canvasToData(canvasX, canvasY);
+
+                if (dataCoords.x >= chartState.xAxis.min && dataCoords.x <= chartState.xAxis.max &&
+                    dataCoords.y >= chartState.yAxis.min && dataCoords.y <= chartState.yAxis.max) {
+                    
+                    if (!chartState.groups[chartState.activeGroupIndex].enabled) {
+                        alert(`數據組 "${chartState.groups[chartState.activeGroupIndex].name}" 尚未啟用，請先勾選啟用。`);
+                        return;
+                    }
+
+                    chartState.dataPoints.push({
+                        x: dataCoords.x,
+                        y: dataCoords.y,
+                        groupIndex: chartState.activeGroupIndex
+                    });
+
+                    const activeGroup = chartState.groups[chartState.activeGroupIndex];
+                    if (activeGroup.trendline.visible) {
+                        recalculateTrendline(chartState.activeGroupIndex);
+                    }
+                    
+                    redrawCanvas();
+                }
+            });
+            
+            window.addEventListener('resize', redrawCanvas);
+
+            // --- 初始啟動 ---
+            initializeGroupSettings();
+            setTimeout(() => {
+                applyBtn.click();
+            }, 100);
+        });
+    </script>
+
+</body>
+</html>
