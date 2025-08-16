@@ -11,19 +11,43 @@
         html, body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #f0f2f5;
-            overflow: hidden; /* 禁用頁面主滾動條 */
+            overflow-x: hidden; /* 只禁用水平滾動 */
         }
         /* 自訂樣式 */
         .group-active-radio:checked { background-color: #2563eb; border-color: #2563eb; }
         .color-input::-webkit-color-swatch-wrapper { padding: 0; }
         .color-input::-webkit-color-swatch { border: none; border-radius: 50%; }
-        canvas { cursor: crosshair; }
+        canvas { 
+            cursor: crosshair; 
+            touch-action: none; /* 防止觸控時的預設行為 */
+        }
         .canvas-bg-white { background-color: white; }
         /* 美化滾動條 */
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* 手機響應式樣式 */
+        @media (max-width: 1023px) {
+            .chart-container {
+                min-height: 300px;
+                height: 50vh;
+            }
+            
+            .mobile-padding {
+                padding: 0.75rem;
+            }
+            
+            .mobile-text {
+                font-size: 0.875rem;
+            }
+            
+            .mobile-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
     </style>
 </head>
 <body class="h-full text-gray-800">
@@ -41,19 +65,19 @@
 
             <!-- 左側：圖表與功能區 (固定不滾動) -->
             <div class="lg:col-span-5 flex flex-col h-full">
-                <div class="bg-white p-4 rounded-xl shadow-lg h-full flex flex-col">
+                <div class="bg-white mobile-padding p-4 rounded-xl shadow-lg h-full flex flex-col chart-container">
                     <!-- 畫布容器 (自動伸展) -->
-                    <div class="relative w-full flex-grow">
+                    <div class="relative w-full flex-grow" id="canvas-container">
                         <canvas id="chart-canvas" class="absolute top-0 left-0 w-full h-full rounded-lg border border-gray-300 canvas-bg-white"></canvas>
                     </div>
                 </div>
             </div>
             
             <!-- 右側：設定與數據面板 (內部可滾動) -->
-            <div class="lg:col-span-3 space-y-6 overflow-y-auto custom-scrollbar pr-3">
+            <div class="lg:col-span-3 space-y-6 overflow-y-auto custom-scrollbar pr-3 max-h-screen">
                 <!-- 設定面板 -->
-                <div class="bg-white p-5 rounded-xl shadow-lg">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2">圖表設定</h2>
+                <div class="bg-white mobile-padding p-5 rounded-xl shadow-lg">
+                    <h2 class="text-xl mobile-text font-bold mb-4 border-b pb-2">圖表設定</h2>
                     
                     <div class="space-y-4 mb-6">
                         <div>
@@ -105,15 +129,15 @@
                             <input type="number" id="y-axis-unit" value="5" min="0.5" step="0.5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
                     </div>
-                    <button id="apply-settings" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-4">套用設定(會清空數據)</button>
+                    <button id="apply-settings" class="w-full bg-blue-600 text-white font-bold mobile-button py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-4">套用設定(會清空數據)</button>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2">點擊圖表區加入實驗數據點</h3>
+                <div class="bg-white mobile-padding p-5 rounded-xl shadow-lg">
+                    <h3 class="text-lg mobile-text font-semibold text-gray-700 mb-2">點擊圖表區加入實驗數據點</h3>
                     <div id="groups-container" class="space-y-3">
                         <!-- JavaScript 會在這裡動態生成 4 組設定 -->
                     </div>
-                    <button id="download-chart" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors mt-6">下載圖表 (PNG)</button>
+                    <button id="download-chart" class="w-full bg-green-600 text-white font-bold mobile-button py-2 px-4 rounded-lg hover:bg-green-700 transition-colors mt-6">下載圖表 (PNG)</button>
                 </div>
             </div>
         </main>
@@ -155,7 +179,16 @@
                 activeGroupIndex: 0
             };
             
-            const padding = { top: 60, right: 150, bottom: 60, left: 70 };
+            // 響應式 padding
+            function getResponsivePadding() {
+                const isMobile = window.innerWidth < 1024;
+                return isMobile 
+                    ? { top: 40, right: 80, bottom: 40, left: 50 }
+                    : { top: 60, right: 150, bottom: 60, left: 70 };
+            }
+            
+            let resizeObserver;
+            let canvasInitialized = false;
 
             // --- 函數 ---
             function initializeGroupSettings() {
@@ -311,8 +344,9 @@
             }
 
             function dataToCanvas(x, y) {
-                const canvasWidth = canvas.parentElement.clientWidth;
-                const canvasHeight = canvas.parentElement.clientHeight;
+                const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+                const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+                const padding = getResponsivePadding();
                 const plotWidth = canvasWidth - padding.left - padding.right;
                 const plotHeight = canvasHeight - padding.top - padding.bottom;
 
@@ -322,8 +356,9 @@
             }
 
             function canvasToData(canvasX, canvasY) {
-                const canvasWidth = canvas.parentElement.clientWidth;
-                const canvasHeight = canvas.parentElement.clientHeight;
+                const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+                const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+                const padding = getResponsivePadding();
                 const plotWidth = canvasWidth - padding.left - padding.right;
                 const plotHeight = canvasHeight - padding.top - padding.bottom;
 
@@ -335,6 +370,10 @@
             function drawPoint(x, y, groupIndex) {
                 const group = chartState.groups[groupIndex];
                 const pos = dataToCanvas(x, y);
+                const isMobile = window.innerWidth < 1024;
+                const pointSize = isMobile ? 4 : 5;
+                const rectSize = isMobile ? 6 : 8;
+                
                 ctx.fillStyle = group.color;
                 ctx.strokeStyle = group.color;
                 ctx.lineWidth = 2;
@@ -342,24 +381,24 @@
 
                 switch (group.shape) {
                     case 'circle':
-                        ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
+                        ctx.arc(pos.x, pos.y, pointSize, 0, 2 * Math.PI);
                         ctx.fill();
                         break;
                     case 'square':
-                        ctx.fillRect(pos.x - 4, pos.y - 4, 8, 8);
+                        ctx.fillRect(pos.x - rectSize/2, pos.y - rectSize/2, rectSize, rectSize);
                         break;
                     case 'triangle':
-                        ctx.moveTo(pos.x, pos.y - 5);
-                        ctx.lineTo(pos.x + 5, pos.y + 5);
-                        ctx.lineTo(pos.x - 5, pos.y + 5);
+                        ctx.moveTo(pos.x, pos.y - pointSize);
+                        ctx.lineTo(pos.x + pointSize, pos.y + pointSize);
+                        ctx.lineTo(pos.x - pointSize, pos.y + pointSize);
                         ctx.closePath();
                         ctx.fill();
                         break;
                     case 'cross':
-                        ctx.moveTo(pos.x - 4, pos.y - 4);
-                        ctx.lineTo(pos.x + 4, pos.y + 4);
-                        ctx.moveTo(pos.x + 4, pos.y - 4);
-                        ctx.lineTo(pos.x - 4, pos.y + 4);
+                        ctx.moveTo(pos.x - pointSize, pos.y - pointSize);
+                        ctx.lineTo(pos.x + pointSize, pos.y + pointSize);
+                        ctx.moveTo(pos.x + pointSize, pos.y - pointSize);
+                        ctx.lineTo(pos.x - pointSize, pos.y + pointSize);
                         ctx.stroke();
                         break;
                 }
@@ -415,7 +454,9 @@
                         ctx.stroke();
 
                         if (showEquation || group.trendline.showR2) {
-                            ctx.font = '12px "Noto Sans TC"';
+                            const isMobile = window.innerWidth < 1024;
+                            const equationFontSize = isMobile ? '10px' : '12px';
+                            ctx.font = `${equationFontSize} "Noto Sans TC"`;
                             ctx.fillStyle = group.color;
                             ctx.textAlign = 'right';
                             ctx.textBaseline = 'bottom';
@@ -454,6 +495,7 @@
             function drawGridAndAxes() {
                 const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
                 const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+                const padding = getResponsivePadding();
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'white';
@@ -462,7 +504,9 @@
                 ctx.strokeStyle = '#e0e0e0';
                 ctx.fillStyle = '#333';
                 ctx.lineWidth = 1;
-                ctx.font = '12px "Noto Sans TC"';
+                const isMobile = window.innerWidth < 1024;
+                const gridFontSize = isMobile ? '10px' : '12px';
+                ctx.font = `${gridFontSize} "Noto Sans TC"`;
 
                 const xAxis = chartState.xAxis;
                 const yAxis = chartState.yAxis;
@@ -519,16 +563,21 @@
                 ctx.lineTo(canvasWidth - padding.right, canvasHeight - padding.bottom);
                 ctx.stroke();
 
-                ctx.font = 'bold 20px "Noto Sans TC"';
+                // 響應式字體大小
+                const titleFontSize = isMobile ? '16px' : '20px';
+                const labelFontSize = isMobile ? '12px' : '16px';
+                
+                ctx.font = `bold ${titleFontSize} "Noto Sans TC"`;
                 ctx.textAlign = 'center';
                 ctx.fillText(chartState.title, canvasWidth / 2, padding.top / 2);
 
-                ctx.font = '16px "Noto Sans TC"';
+                ctx.font = `${labelFontSize} "Noto Sans TC"`;
                 ctx.fillText(xAxis.label, canvasWidth / 2, canvasHeight - 10);
                 
                 ctx.save();
                 ctx.translate(20, canvasHeight / 2);
                 ctx.rotate(-Math.PI / 2);
+                ctx.font = `${labelFontSize} "Noto Sans TC"`;
                 ctx.fillText(yAxis.label, 0, 0);
                 ctx.restore();
             }
@@ -536,8 +585,9 @@
             function drawLegend() {
                 const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
                 let legendY = padding.top;
-                
-                ctx.font = '12px "Noto Sans TC"';
+                const isMobile = window.innerWidth < 1024;
+                const legendFontSize = isMobile ? '10px' : '12px';
+                ctx.font = `${legendFontSize} "Noto Sans TC"`;
                 
                 chartState.groups.forEach(group => {
                     if (group.enabled) {
@@ -549,11 +599,14 @@
                         ctx.lineWidth = 2;
                         ctx.beginPath();
 
+                        const pointSize = isMobile ? 4 : 5;
+                        const rectSize = isMobile ? 6 : 8;
+                        
                         switch (group.shape) {
-                            case 'circle': ctx.arc(legendX, legendY, 5, 0, 2 * Math.PI); ctx.fill(); break;
-                            case 'square': ctx.fillRect(legendX - 4, legendY - 4, 8, 8); break;
-                            case 'triangle': ctx.moveTo(legendX, legendY - 5); ctx.lineTo(legendX + 5, legendY + 5); ctx.lineTo(legendX - 5, legendY + 5); ctx.closePath(); ctx.fill(); break;
-                            case 'cross': ctx.moveTo(legendX - 4, legendY - 4); ctx.lineTo(legendX + 4, legendY + 4); ctx.moveTo(legendX + 4, legendY - 4); ctx.lineTo(legendX - 4, legendY + 4); ctx.stroke(); break;
+                            case 'circle': ctx.arc(legendX, legendY, pointSize, 0, 2 * Math.PI); ctx.fill(); break;
+                            case 'square': ctx.fillRect(legendX - rectSize/2, legendY - rectSize/2, rectSize, rectSize); break;
+                            case 'triangle': ctx.moveTo(legendX, legendY - pointSize); ctx.lineTo(legendX + pointSize, legendY + pointSize); ctx.lineTo(legendX - pointSize, legendY + pointSize); ctx.closePath(); ctx.fill(); break;
+                            case 'cross': ctx.moveTo(legendX - pointSize, legendY - pointSize); ctx.lineTo(legendX + pointSize, legendY + pointSize); ctx.moveTo(legendX + pointSize, legendY - pointSize); ctx.lineTo(legendX - pointSize, legendY + pointSize); ctx.stroke(); break;
                         }
 
                         // Draw text
@@ -568,20 +621,35 @@
             }
 
             function redrawCanvas() {
-                const rect = canvas.parentElement.getBoundingClientRect();
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+                
+                const rect = container.getBoundingClientRect();
                 const dpr = window.devicePixelRatio || 1;
                 
-                if (rect.width === 0 || rect.height === 0) return;
-
+                // 檢查尺寸是否有效
+                if (rect.width === 0 || rect.height === 0) {
+                    // 延遲重試
+                    setTimeout(redrawCanvas, 100);
+                    return;
+                }
+                
+                // 設定 canvas 尺寸
                 canvas.width = rect.width * dpr;
                 canvas.height = rect.height * dpr;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
                 
+                // 重設 transform
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
                 ctx.scale(dpr, dpr);
 
                 drawGridAndAxes();
                 drawAllPoints();
                 drawTrendlines();
                 drawLegend();
+                
+                canvasInitialized = true;
             }
 
             // --- 事件監聽 ---
@@ -624,10 +692,11 @@
                 link.click();
             });
 
-            canvas.addEventListener('click', (e) => {
+            // 點擊/觸控事件處理函數
+            function handleInteraction(clientX, clientY) {
                 const rect = canvas.getBoundingClientRect();
-                const canvasX = e.clientX - rect.left;
-                const canvasY = e.clientY - rect.top;
+                const canvasX = clientX - rect.left;
+                const canvasY = clientY - rect.top;
                 
                 const dataCoords = canvasToData(canvasX, canvasY);
 
@@ -652,15 +721,103 @@
                     
                     redrawCanvas();
                 }
+            }
+            
+            // 滑鼠點擊事件
+            canvas.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleInteraction(e.clientX, e.clientY);
             });
             
-            window.addEventListener('resize', redrawCanvas);
+            // 觸控事件
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    const touch = e.changedTouches[0];
+                    handleInteraction(touch.clientX, touch.clientY);
+                }
+            });
+            
+            // ResizeObserver 監控容器大小變化
+            function initResizeObserver() {
+                if (resizeObserver) {
+                    resizeObserver.disconnect();
+                }
+                
+                resizeObserver = new ResizeObserver((entries) => {
+                    for (let entry of entries) {
+                        if (entry.target.id === 'canvas-container') {
+                            redrawCanvas();
+                        }
+                    }
+                });
+                
+                const container = document.getElementById('canvas-container');
+                if (container) {
+                    resizeObserver.observe(container);
+                }
+            }
+            
+            window.addEventListener('resize', () => {
+                setTimeout(redrawCanvas, 100);
+            });
+            
+            // 防止觸控時的滾動
+            document.addEventListener('touchmove', (e) => {
+                if (e.target === canvas) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
 
             // --- 初始啟動 ---
-            initializeGroupSettings();
-            setTimeout(() => {
-                applyBtn.click();
-            }, 100);
+            function initializeApp() {
+                try {
+                    // 檢查 DOM 元素是否存在
+                    if (!canvas || !ctx) {
+                        console.error('找不到 canvas 元素');
+                        return;
+                    }
+                    
+                    // 初始化組設定
+                    initializeGroupSettings();
+                    
+                    // 初始化 ResizeObserver
+                    initResizeObserver();
+                    
+                    // 等待容器尺寸穩定後再繪製
+                    let retryCount = 0;
+                    const maxRetries = 10;
+                    
+                    function tryInitialDraw() {
+                        const container = document.getElementById('canvas-container');
+                        if (container && container.getBoundingClientRect().width > 0) {
+                            applyBtn.click();
+                        } else if (retryCount < maxRetries) {
+                            retryCount++;
+                            setTimeout(tryInitialDraw, 200);
+                        } else {
+                            console.error('無法初始化圖表：容器尺寸不正確');
+                        }
+                    }
+                    
+                    // 等待一段時間後開始初始化
+                    setTimeout(tryInitialDraw, 300);
+                    
+                } catch (error) {
+                    console.error('初始化應用程式時發生錯誤:', error);
+                }
+            }
+            
+            // 在 DOM 完全載入後初始化
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeApp);
+            } else {
+                initializeApp();
+            }
         });
     </script>
 
