@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive UI Design Styles Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Roboto:wght@400;500;700&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Global Reset */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background-color: #f0f0f0; padding-bottom: 100px; color: #333; position: relative; }
+        
+        /* Container for the presentation */
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; padding-top: 60px; /* 增加頂部間距以免標題被 Logo 遮擋 */ }
+        
+        /* Section Wrapper */
+        section {
+            margin-bottom: 60px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        /* Common Elements for Demo */
+        h1.main-title { text-align: center; margin-bottom: 50px; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.5rem; }
+        h2 { margin-bottom: 15px; font-weight: 600; }
+        p { margin-bottom: 20px; line-height: 1.6; }
+        .demo-card { padding: 20px; margin-bottom: 20px; background: #fff; }
+        .tag-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .btn { padding: 10px 20px; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; font-family: inherit; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+
+        /* Label helper */
+        .style-label {
+            position: absolute;
+            top: 0; right: 0;
+            background: #333; color: #fff;
+            padding: 5px 10px;
+            font-size: 10px; font-weight: bold;
+            border-bottom-left-radius: 8px;
+            z-index: 10;
+        }
+
+        /* --- NEW: Top Right Floating Logo --- */
+        .source-link-logo {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 10px 16px;
+            border-radius: 99px;
+            border: 1px solid rgba(0,0,0,0.08);
+            text-decoration: none;
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+        }
+        
+        .source-link-logo:hover {
+            transform: translateY(-2px);
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            color: #000;
+        }
+
+        .source-link-logo svg {
+            width: 20px;
+            height: 20px;
+            color: #37352f; /* Notion icon color */
+        }
+
+        /* --- EXISTING STYLES (1-17) --- */
+
+        /* 1. Cupertino / iOS HIG */
+        .style-cupertino { background: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%); font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #000; border-radius: 40px; }
+        .style-cupertino h2 { font-weight: 800; font-size: 2.2rem; letter-spacing: -0.02em; }
+        .style-cupertino .demo-card { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.4); }
+        .style-cupertino .btn { background-color: #007AFF; color: white; border-radius: 12px; font-weight: 600; font-size: 15px; }
+        .style-cupertino th, .style-cupertino td { border-bottom: 1px solid rgba(60, 60, 67, 0.1); }
+        
+        /* 2. Material Design 3 */
+        .style-material { background-color: #fef7ff; font-family: 'Roboto', sans-serif; color: #1d1b20; border-radius: 24px; }
+        .style-material h2 { font-weight: 400; font-size: 1.8rem; }
+        .style-material .demo-card { background-color: #f3edf7; border-radius: 16px; box-shadow: none; }
+        .style-material .btn { background-color: #6750a4; color: white; border-radius: 9999px; font-weight: 500; letter-spacing: 0.1px; box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15); }
+        .style-material .fab { width: 56px; height: 56px; border-radius: 16px; background-color: #eaddff; color: #21005d; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15); }
+
+        /* 3. Grafana Style */
+        .style-grafana { background-color: #111217; font-family: 'Inter', sans-serif; color: #d8d9da; }
+        .style-grafana h2 { color: #fff; font-weight: 500; }
+        .style-grafana .demo-card { background-color: #181b1f; border: 1px solid #2c3235; border-radius: 2px; padding: 15px; }
+        .style-grafana .chart-line { height: 2px; background-color: #73bf69; width: 100%; margin-top: 10px; box-shadow: 0 0 5px rgba(115, 191, 105, 0.4); }
+        .style-grafana th { color: #73bf69; font-family: 'JetBrains Mono', monospace; border-bottom: 2px solid #222; }
+        .style-grafana td { border-bottom: 1px solid #222; }
+
+        /* 4. Salesforce Lightning */
+        .style-salesforce { background-image: linear-gradient(to bottom, #15325b 0%, #b0c4df 100%); padding-top: 60px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .style-salesforce .demo-card { background-color: #fff; border-radius: 4px; border: 1px solid #dddbda; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.10); margin-top: -20px; padding: 0; }
+        .style-salesforce h2 { font-size: 1.125rem; color: #080707; padding: 15px 20px; border-bottom: 3px solid #1b96ff; display: inline-block; margin: 0; }
+        .style-salesforce th { text-transform: uppercase; font-size: 0.75rem; color: #514f4d; font-weight: 700; background: #fafaf9; }
+        .style-salesforce .btn { background-color: #0176d3; color: white; border-radius: 4px; font-size: 13px; font-weight: 400; }
+
+        /* 5. Tremor Dashboard */
+        .style-tremor { background-color: #f9fafb; font-family: 'Inter', sans-serif; color: #374151; }
+        .style-tremor h2 { font-size: 1.25rem; color: #111827; font-weight: 600; }
+        .style-tremor .demo-card { background-color: #fff; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .style-tremor .metric-value { font-size: 1.875rem; font-weight: 600; color: #111827; }
+        .style-tremor .metric-label { color: #6b7280; font-size: 0.875rem; }
+        .style-tremor .progress-bar { height: 8px; background-color: #eff6ff; border-radius: 9999px; overflow: hidden; margin-top: 10px; }
+        .style-tremor .progress-fill { height: 100%; background-color: #3b82f6; width: 75%; }
+
+        /* 6. Metronic */
+        .style-metronic { background-color: #1e1e2d; font-family: Poppins, Helvetica, sans-serif; color: #a1a5b7; }
+        .style-metronic .demo-card { background-color: #151521; border-radius: 0.475rem; box-shadow: 0px 0px 20px 0px rgba(76, 87, 125, 0.02); padding: 30px; }
+        .style-metronic h2 { color: #fff; font-size: 1.35rem; font-weight: 600; }
+        .style-metronic .badge { padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 5px; }
+        .style-metronic .badge-primary { background: rgba(0, 158, 247, 0.1); color: #009ef7; }
+        .style-metronic .btn { background-color: #009ef7; color: #fff; border-radius: 0.475rem; font-weight: 500; }
+
+        /* 7. Arc Browser Style */
+        .style-arc { background: linear-gradient(110deg, #EAD6EE 0%, #A0F1EA 100%); font-family: 'Inter', sans-serif; padding: 50px; }
+        .style-arc .demo-card { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; color: #2b2b2b; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); }
+        .style-arc .sidebar-item { padding: 8px 12px; margin-bottom: 4px; border-radius: 8px; background: rgba(255,255,255,0.0); font-size: 14px; cursor: pointer; }
+        .style-arc .sidebar-item.active { background: rgba(0,0,0,0.08); }
+
+        /* 8. Vercel / Geist Design */
+        .style-geist { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
+        .style-geist h2 { font-weight: 700; letter-spacing: -0.04em; background: linear-gradient(to bottom, #fff 40%, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .style-geist .demo-card { background-color: #000; border: 1px solid #333; border-radius: 6px; }
+        .style-geist .btn { background-color: #fff; color: #000; border: 1px solid #fff; border-radius: 5px; font-weight: 500; font-size: 14px; height: 40px; }
+        .style-geist td, .style-geist th { border-bottom: 1px solid #333; }
+
+        /* 9. Shadcn/ui */
+        .style-shadcn { background-color: #ffffff; font-family: 'Inter', sans-serif; color: #020817; border: 1px solid #e2e8f0; }
+        .style-shadcn .demo-card { border: 1px solid #e2e8f0; border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); background-color: #fff; }
+        .style-shadcn h2 { font-weight: 600; letter-spacing: -0.025em; }
+        .style-shadcn .btn { background-color: #0f172a; color: #f8fafc; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; padding: 0.5rem 1rem; }
+        .style-shadcn .input-field { border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; width: 100%; margin-bottom: 10px; }
+
+        /* 10. Linear Style */
+        .style-linear { background-color: #08080a; color: #e8e8e8; font-family: 'Inter', sans-serif; }
+        .style-linear h2 { font-weight: 500; color: #fff; }
+        .style-linear .demo-card { background-color: #121217; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); border-radius: 8px; position: relative; overflow: hidden; }
+        .style-linear .demo-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, rgba(0,0,0,0), rgba(94, 110, 233, 0.5), rgba(0,0,0,0)); opacity: 0.7; }
+        .style-linear .highlight-text { background: linear-gradient(to right, #b4a5ff, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 500; }
+        .style-linear .btn { background-color: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.05); color: #eee; border-radius: 6px; font-size: 13px; }
+
+        /* 11. Gumroad / Neobrutalism */
+        .style-neobrutalism {
+            background-color: #FFDEE9; background-image: linear-gradient(0deg, #FFDEE9 0%, #B5FFFC 100%);
+            font-family: 'Inter', sans-serif;
+            border: 4px solid #000; box-shadow: 8px 8px 0px #000;
+            border-radius: 0;
+        }
+        .style-neobrutalism h2 { font-weight: 800; text-transform: uppercase; }
+        .style-neobrutalism .demo-card {
+            background: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px #000; border-radius: 0;
+        }
+        .style-neobrutalism .btn {
+            background: #FF90E8; border: 3px solid #000; box-shadow: 4px 4px 0px #000;
+            color: #000; font-weight: 700; border-radius: 0; text-transform: uppercase;
+            transition: all 0.1s;
+        }
+        .style-neobrutalism .btn:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
+        .style-neobrutalism .tag { background: #FEF9C3; border: 2px solid #000; padding: 4px 8px; font-weight: bold; font-size: 0.9rem; }
+
+        /* 12. IBM Carbon */
+        .style-carbon {
+            background-color: #f4f4f4; font-family: 'IBM Plex Sans', 'Roboto', sans-serif; color: #161616; border-radius: 0;
+        }
+        .style-carbon h2 { font-weight: 400; }
+        .style-carbon .demo-card { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 0; padding: 0; }
+        .style-carbon .tile-header { padding: 1rem; background: #f4f4f4; font-weight: 600; font-size: 0.875rem; }
+        .style-carbon .tile-content { padding: 1rem; }
+        .style-carbon .btn { background-color: #0f62fe; color: #ffffff; border-radius: 0; font-weight: 400; justify-content: space-between; padding: 1rem; height: 3rem; width: auto; min-width: 10rem; }
+        .style-carbon table th { background-color: #e0e0e0; font-weight: 600; font-size: 0.875rem; border-bottom: none; }
+        .style-carbon table td { border-bottom: 1px solid #e0e0e0; background: #fff; }
+
+        /* 13. Supabase */
+        .style-supabase {
+            background-color: #181818; color: #ededed; font-family: 'Inter', sans-serif;
+        }
+        .style-supabase h2 { color: #fff; font-weight: 600; }
+        .style-supabase .demo-card { background-color: #1f1f1f; border: 1px solid #2e2e2e; border-radius: 6px; }
+        .style-supabase .accent-text { color: #3ECF8E; } /* Supabase Green */
+        .style-supabase .btn { background-color: #3ECF8E; color: #181818; border-radius: 4px; font-weight: 600; font-size: 0.9rem; padding: 8px 16px; }
+        .style-supabase .code-block { background: #000; padding: 15px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; border: 1px solid #2e2e2e; }
+        .style-supabase th { color: #888; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #2e2e2e; }
+        .style-supabase td { border-bottom: 1px solid #2e2e2e; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+
+        /* 14. AdminLTE */
+        .style-adminlte {
+            background-color: #f4f6f9; font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; border: 1px solid #d2d6de;
+        }
+        .style-adminlte h2 { font-weight: 400; margin: 0; font-size: 1.5rem; }
+        .style-adminlte .box { background: #fff; border-top: 3px solid #d2d6de; box-shadow: 0 1px 1px rgba(0,0,0,0.1); border-radius: 3px; margin-bottom: 20px; }
+        .style-adminlte .box.box-primary { border-top-color: #3c8dbc; }
+        .style-adminlte .box.box-danger { border-top-color: #dd4b39; }
+        .style-adminlte .box-header { color: #444; display: block; padding: 10px; position: relative; border-bottom: 1px solid #f4f4f4; }
+        .style-adminlte .box-body { padding: 10px; }
+        .style-adminlte .badge { display: inline-block; padding: 3px 7px; font-size: 12px; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 10px; }
+        .style-adminlte .bg-yellow { background-color: #f39c12 !important; }
+        .style-adminlte .bg-red { background-color: #dd4b39 !important; }
+
+        /* 15. Windows 95 / Vaporwave */
+        .style-win95 {
+            background-color: #008080; /* Classic Teal desktop */
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            padding: 50px; border-radius: 0;
+            background-image: linear-gradient(45deg, #ff00ff20 25%, transparent 25%, transparent 75%, #ff00ff20 75%, #ff00ff20), linear-gradient(45deg, #ff00ff20 25%, transparent 25%, transparent 75%, #ff00ff20 75%, #ff00ff20);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        .style-win95 .window {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #404040 #404040 #dfdfdf; /* 3D Outset border */
+            box-shadow: 1px 1px 0px #000;
+        }
+        .style-win95 .title-bar {
+            background: navy; color: white; padding: 2px 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+        }
+        .style-win95 .title-bar-controls button {
+             width: 16px; height: 14px; background: #c0c0c0; border: 1px solid; border-color: #dfdfdf #404040 #404040 #dfdfdf; font-size: 10px; line-height: 10px; font-weight: bold; padding: 0;
+        }
+        .style-win95 .window-body { padding: 15px; }
+        .style-win95 .win-btn {
+            background: #c0c0c0; border: 2px solid; border-color: #dfdfdf #404040 #404040 #dfdfdf;
+            color: #000; font-size: 12px; padding: 4px 12px; margin-right: 8px;
+        }
+        .style-win95 .win-btn:active { border-color: #404040 #dfdfdf #dfdfdf #404040; }
+        .style-win95 .inset-field { background: #fff; border: 2px solid; border-color: #404040 #dfdfdf #dfdfdf #404040; padding: 2px 5px; }
+
+        /* 16. Notion Style */
+        .style-notion {
+            background-color: #fff; color: #37352f; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+        .style-notion h2 { font-weight: 600; font-size: 1.5rem; margin-top: 2em; display: flex; align-items: center; }
+        .style-notion .notion-block {
+            padding: 4px 0; margin: 1px 0; line-height: 1.5;
+        }
+        .style-notion .notion-callout {
+            background: #F7F6F3; /* Light gray bg */
+            padding: 16px; border-radius: 4px; display: flex; margin: 12px 0;
+        }
+        .style-notion .emoji-icon { font-size: 24px; margin-right: 12px; flex-shrink: 0; }
+        .style-notion .notion-quote {
+            border-left: 3px solid #37352f; padding-left: 14px; font-size: 1.1em; margin: 1em 0;
+        }
+
+        /* 17. Ant Design Pro */
+        .style-ant {
+            background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: rgba(0,0,0,0.85);
+        }
+        .style-ant .demo-card {
+            background: #fff; border-radius: 2px; padding: 24px; margin-bottom: 24px;
+        }
+        .style-ant h2 { font-weight: 500; font-size: 20px; margin-bottom: 24px; }
+        .style-ant .ant-btn-primary {
+            background: #1890ff; border-color: #1890ff; color: #fff; border-radius: 2px; font-size: 14px; padding: 6px 15px; text-shadow: 0 -1px 0 rgba(0,0,0,0.12); box-shadow: 0 2px 0 rgba(0,0,0,0.045);
+        }
+        .style-ant table th {
+            background: #fafafa; color: rgba(0,0,0,0.85); font-weight: 500; border-bottom: 1px solid #f0f0f0;
+        }
+        .style-ant table td { border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .style-ant .status-badge {
+            display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px;
+        }
+        .style-ant .status-processing { background: #1890ff; }
+        .style-ant .status-success { background: #52c41a; }
+
+    </style>
+</head>
+<body>
+
+<a href="https://lineasy.notion.site/Design-styles-2b9046aebb5b8072a827ea47f513693b?source=copy_link" target="_blank" class="source-link-logo" title="View Source on Notion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <line x1="10" y1="9" x2="8" y2="9"></line>
+    </svg>
+    <span>View on Notion</span>
+</a>
+
+<div class="container">
+    <h1 class="main-title">UI Design Styles Showcase (17 Styles)</h1>
+
+    <section class="style-cupertino">
+        <div class="style-label">1. Cupertino / iOS</div>
+        <h2>設定</h2>
+        <div class="demo-card">
+            <p><strong>iOS Human Interface Guidelines</strong><br>模糊的半透明背景 Translucent sidebar 營造層次感。</p>
+            <table>
+                <tr>
+                    <th>選項</th>
+                    <th>狀態</th>
+                </tr>
+                <tr>
+                    <td>Wi-Fi</td>
+                    <td style="color: #8e8e93;">開啟</td>
+                </tr>
+                <tr>
+                    <td>藍牙</td>
+                    <td style="color: #8e8e93;">關閉</td>
+                </tr>
+            </table>
+            <br>
+            <button class="btn">更新軟體</button>
+        </div>
+    </section>
+
+    <section class="style-material">
+        <div class="style-label">2. Material Design 3</div>
+        <h2>Material You</h2>
+        <div class="demo-card">
+            <p>大量使用圓潤的藥丸形狀按鈕 (Pill-shaped buttons)。從桌布提取的動態色彩系統。</p>
+            <div class="tag-container" style="align-items: center;">
+                <button class="btn">Primary Action</button>
+                <div class="fab" style="margin-left: auto;">+</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-grafana">
+        <div class="style-label">3. Grafana Style</div>
+        <h2>System Metrics</h2>
+        <div class="demo-card">
+            <div style="display:flex; justify-content:space-between; color:#999; font-size:12px; margin-bottom:5px;">
+                <span>CPU Usage</span>
+                <span style="color:#73bf69;">45%</span>
+            </div>
+            <div class="chart-line"></div>
+            <div class="chart-line" style="width: 60%; margin-top:5px; opacity:0.6;"></div>
+            <br>
+            <table>
+                <thead>
+                    <tr><th>TIME</th><th>METRIC</th><th>VALUE</th></tr>
+                </thead>
+                <tbody style="font-family: monospace; font-size: 13px;">
+                    <tr><td>10:00:01</td><td>req/sec</td><td style="color:#e0b338">1,204</td></tr>
+                    <tr><td>10:00:05</td><td>errors</td><td style="color:#f2495c">0.01%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="style-salesforce">
+        <div class="style-label">4. Salesforce Lightning</div>
+        <div class="demo-card">
+            <div style="padding: 0; border-bottom: 1px solid #dddbda;">
+                <h2>商機 (Opportunities)</h2>
+            </div>
+            <div style="padding: 20px;">
+                <table>
+                    <thead>
+                        <tr><th>商機名稱</th><th>階段</th><th>金額</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="#" style="color:#0176d3; text-decoration:none;">Acme 2025 Deal</a></td>
+                            <td>Negotiation</td>
+                            <td>$50,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:20px; text-align:right;">
+                    <button class="btn">新增商機</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-tremor">
+        <div class="style-label">5. Tremor</div>
+        <h2>Dashboard</h2>
+        <div class="demo-card">
+            <div class="metric-label">Total Revenue</div>
+            <div class="metric-value">$14,500</div>
+            <div style="margin-top: 15px;">
+                <div style="display:flex; justify-content:space-between; font-size: 0.875rem; color:#374151;">
+                    <span>Target</span>
+                    <span>75%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-metronic">
+        <div class="style-label">6. Metronic</div>
+        <div class="demo-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0;">Project Stats</h2>
+                <button class="btn" style="padding: 8px 16px; font-size: 12px;">Export</button>
+            </div>
+            <div style="background: #1b1b29; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+                <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight:600;">Server Upgrade</span>
+                    <span class="badge badge-primary">In Progress</span>
+                </div>
+                <div style="height: 4px; background: #2b2b40; border-radius: 2px; margin-top: 10px;">
+                    <div style="width: 60%; height: 100%; background: #009ef7; border-radius: 2px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-arc">
+        <div class="style-label">7. Arc Browser</div>
+        <div style="display: flex; gap: 20px;">
+            <div style="width: 30%; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 12px; padding: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                <div class="sidebar-item active">Space 1</div>
+                <div class="sidebar-item">Favorites</div>
+            </div>
+            <div class="demo-card" style="flex: 1; margin: 0;">
+                <h2 style="font-size: 1.5rem; margin-top:0;">Borderless Content</h2>
+                <p>側邊欄半透明設計，Frosted glass 磨砂質感。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-geist">
+        <div class="style-label">8. Vercel / Geist</div>
+        <div class="demo-card" style="padding: 30px;">
+            <h2 style="margin-top: 0;">Deployments</h2>
+            <p style="color: #888;">極簡黑白，沒有任何多餘的顏色。幾何感與極速感。</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn">View Project</button>
+            </div>
+            <div style="border-top: 1px solid #333; padding-top: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 10px; height: 10px; background: #fff; border-radius: 50%;"></div>
+                    <span style="font-weight: 500;">production-main-29d</span>
+                    <span style="margin-left: auto; color: #666; font-family: monospace;">7m ago</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-shadcn">
+        <div class="style-label">9. Shadcn/ui</div>
+        <div style="max-width: 400px; margin: 0 auto;">
+            <div class="demo-card">
+                <div style="padding: 24px;">
+                    <h2 style="font-size: 1.1rem; margin-top: 0;">Create an account</h2>
+                    <p style="color: #64748b; font-size: 0.9rem;">Enter your email below to create your account.</p>
+                    <div style="margin-top: 20px;">
+                        <input type="text" class="input-field" placeholder="name@example.com">
+                        <button class="btn" style="width: 100%;">Sign In with Email</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-linear">
+        <div class="style-label">10. Linear</div>
+        <div style="max-width: 600px; margin: 0 auto;">
+            <div class="demo-card">
+                <div style="padding: 24px;">
+                    <h2 style="margin-top: 0;">Issue Tracking</h2>
+                    <p style="color: #8a8f98; font-size: 14px;">暗黑模式聖經，<span class="highlight-text">1px 微弱邊框發光</span>。</p>
+                    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div style="width: 14px; height: 14px; border: 2px solid #5e6ad2; border-radius: 50%; margin-right: 12px;"></div>
+                            <span style="font-size: 14px;">Fix overflow on mobile</span>
+                            <span style="margin-left: auto; color: #555; font-size: 12px;">LIN-129</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-neobrutalism">
+        <div class="style-label">11. Neobrutalism</div>
+        <h2>新野獸派設計</h2>
+        <div class="demo-card">
+            <p>故意粗糙的美學。粗黑邊框，鮮豔的對比色，完全平面沒有模糊陰影。</p>
+            <div class="tag-container">
+                <span class="tag">Thick Borders</span>
+                <span class="tag" style="background:#C7D2FE;">High Contrast</span>
+                <span class="tag" style="background:#FECACA;">Hard Shadows</span>
+            </div>
+            <div style="margin-top: 20px; padding: 20px; border: 3px solid black; background: #B5FFFC;">
+                <h3 style="font-weight: 800; margin-bottom: 10px;">CTA SECTION</h3>
+                 <p style="font-weight: bold;">展現獨特個性的數位產品。</p>
+                <button class="btn">立即購買 NOW</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-carbon">
+        <div class="style-label">12. IBM Carbon</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="demo-card">
+                <div class="tile-header">極簡工業風</div>
+                <div class="tile-content">
+                    <p style="font-size: 0.875rem;">IBM 的企業級設計系統，強調精確度、Grid-based 網格系統和單色調。</p>
+                    <button class="btn">
+                        <span>Primary Button</span>
+                        <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.3 3.7L13.6 8 9.3 12.3 10.7 13.7 16.4 8 10.7 2.3z"></path><path d="M15 8L1 8"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="demo-card" style="padding: 0;">
+                 <table>
+                    <thead>
+                        <tr><th>RESOURCE</th><th>STATUS</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Cluster-A</td><td>Active</td></tr>
+                        <tr><td>Database-Prod</td><td>Stored</td></tr>
+                        <tr><td>LoadBalancer</td><td>Waiting</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-supabase">
+        <div class="style-label">13. Supabase</div>
+        <h2>Database Dashboard</h2>
+        <div class="demo-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <p style="margin: 0;">深綠色主調的暗色模式，<span class="accent-text">Emerald 綠色強調</span>。</p>
+                <button class="btn">New Project</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <table>
+                    <thead><tr><th>ID</th><th>NAME</th><th>CREATED_AT</th><th>STATUS</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>user_profiles</td><td>2023-10-27 10:00:00</td><td><span class="accent-text">Live</span></td></tr>
+                        <tr><td>2</td><td>api_logs</td><td>2023-10-28 11:30:00</td><td>Thinking</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-block">
+                <span style="color: #F87171;">const</span> { data, error } = <span style="color: #F87171;">await</span> supabase<br>
+                &nbsp;.<span style="color: #60A5FA;">from</span>(<span style="color: #3ECF8E;">'users'</span>)<br>
+                &nbsp;.<span style="color: #60A5FA;">select</span>()
+            </div>
+        </div>
+    </section>
+
+    <section class="style-adminlte">
+        <div class="style-label">14. AdminLTE</div>
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h2>經典後台模板 (Bootstrap 4 風格)</h2>
+                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
+                    <span class="badge bg-yellow">Notifications</span>
+                    <span class="badge bg-red">5</span>
+                </div>
+            </div>
+            <div class="box-body">
+                <p>2015-2018 年的經典設計，方正的盒子佈局。整體呈現一個真實運作的舊系統感。</p>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <div class="box box-danger" style="flex: 1; margin-bottom: 0;">
+                         <div class="box-header">
+                            <h3 style="font-size: 1.1rem; margin:0;">CPU Traffic</h3>
+                        </div>
+                        <div class="box-body">
+                             90% <small class="badge bg-red">OVERLOAD</small>
+                        </div>
+                    </div>
+                    <div style="flex: 2; border: 1px solid #eee; background: #fff; padding: 10px;">
+                        <strong>Sidebar Widget style area...</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-win95">
+        <div class="style-label">15. Windows 95</div>
+        <div class="window" style="width: 80%; margin: 0 auto;">
+            <div class="title-bar">
+                <span>My Computer</span>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize">_</button>
+                    <button aria-label="Maximize">□</button>
+                    <button aria-label="Close">X</button>
+                </div>
+            </div>
+            <div class="window-body">
+                <p>懷舊美學的回歸。灰色立體按鈕，藍色標題列，斜面按鈕 (Beveled buttons)。</p>
+                <div style="margin: 20px 0; display: flex; align-items: center;">
+                    <label style="margin-right: 10px;">Username:</label>
+                    <input type="text" class="inset-field" value="Admin">
+                </div>
+                 <fieldset style="border: 2px solid; border-color: #dfdfdf #404040 #404040 #dfdfdf; padding: 10px; margin-bottom: 15px;">
+                    <legend style="margin-left: 10px;">Options</legend>
+                    <div><input type="checkbox" id="retro" checked> <label for="retro">Enable Retro Mode</label></div>
+                </fieldset>
+                <div style="text-align: right;">
+                    <button class="win-btn">OK</button>
+                    <button class="win-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-notion">
+        <div class="style-label">16. Notion</div>
+        <div style="max-width: 700px; margin: 0 auto;">
+            <h2><span class="emoji-icon">📝</span>Project Wiki</h2>
+            <div class="notion-block">
+                重新定義筆記軟體的設計語言，灰底設計，無襯線字體配合溫和的灰色背景。
+            </div>
+            
+            <div class="notion-callout">
+                <span class="emoji-icon">💡</span>
+                <div style="flex: 1;">
+                    <strong>Slash commands & Block editor</strong><br>
+                    大量使用 Emoji 作為視覺識別與分類工具。
+                </div>
+            </div>
+
+            <div class="notion-quote">
+               "此風格適用於需要清晰、有組織、且具備強烈「文件感」的介面設計。"
+            </div>
+
+            <h2 style="font-size: 1.2rem; margin-top: 1.5em;"><span class="emoji-icon">✅</span>Tasks</h2>
+            <div style="border-top: 1px solid #eee; margin-top: 10px;">
+                <div style="display: flex; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                    <span style="width: 30px;">🔲</span>
+                    <span style="flex: 1;">Research Competitors</span>
+                    <span style="color: #999; background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 12px;">To Do</span>
+                </div>
+                <div style="display: flex; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                    <span style="width: 30px;">✅</span>
+                    <span style="flex: 1; text-decoration: line-through; color: #999;">Define Brand Voice</span>
+                    <span style="color: #fff; background: #2eaadc; padding: 2px 6px; border-radius: 4px; font-size: 12px;">Done</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="style-ant">
+        <div class="style-label">17. Ant Design Pro</div>
+        <h2>亞洲企業後台的絕對統治者</h2>
+        
+        <div class="demo-card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div style="font-size: 16px; font-weight: 500;">查詢表格</div>
+                <div>
+                     <button class="btn" style="border: 1px solid #d9d9d9; background: #fff; margin-right: 8px; border-radius: 2px; padding: 6px 15px; font-size: 14px;">重置</button>
+                    <button class="btn ant-btn-primary">查詢</button>
+                </div>
+            </div>
+            <table style="margin-top: 0;">
+                <thead style="background: #fafafa;">
+                    <tr>
+                        <th>規則名稱</th>
+                        <th>描述</th>
+                        <th>服務調用次數</th>
+                        <th>狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>TradeCode 0</td>
+                        <td>這是一段描述</td>
+                        <td>452萬</td>
+                        <td><span class="status-badge status-processing"></span>運行中</td>
+                        <td><a href="#" style="color: #1890ff; text-decoration: none;">配置</a></td>
+                    </tr>
+                    <tr>
+                        <td>TradeCode 1</td>
+                        <td>這是一段描述</td>
+                        <td>123萬</td>
+                        <td><span class="status-badge status-success"></span>已上線</td>
+                        <td><a href="#" style="color: #1890ff; text-decoration: none;">配置</a></td>
+                    </tr>
+                    <tr>
+                        <td>TradeCode 2</td>
+                        <td>這是一段描述</td>
+                        <td>89萬</td>
+                        <td><span class="status-badge status-success"></span>已上線</td>
+                        <td><a href="#" style="color: #1890ff; text-decoration: none;">配置</a></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align: right; margin-top: 20px; color: rgba(0,0,0,0.65); font-size: 14px;">
+                共 400 條記錄 &nbsp; <span style="border: 1px solid #d9d9d9; padding: 4px 12px; border-radius: 2px;">1 / 20 頁</span>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+</body>
+</html>
